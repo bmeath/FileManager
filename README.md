@@ -1,2 +1,2 @@
-# LAN-Stats
-Android app to discover and visualise data of devices connected on the LAN.
+# File Manager
+Android app to manage files on internal and external storage.
