@@ -20,6 +20,7 @@ build/
 gradlew
 gradlew.bat
 gradle.properties
+build.gradle
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -45,3 +46,9 @@ captures/
 
 # other Android Studio files
 FileManager.iml
+app.iml
+proguard-rules.pro
+
+# test directories
+src/test/
+src/androidTest/
