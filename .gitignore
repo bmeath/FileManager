@@ -15,7 +15,11 @@ out/
 
 # Gradle files
 .gradle/
+gradle/
 build/
+gradlew
+gradlew.bat
+gradle.properties
 
 # Local configuration file (sdk path, etc)
 local.properties
@@ -34,7 +38,10 @@ captures/
 
 # Intellij
 *.iml
-.idea/workspace.xml
+.idea/
 
 # Keystore files
 *.jks
+
+# other Android Studio files
+FileManager.iml
