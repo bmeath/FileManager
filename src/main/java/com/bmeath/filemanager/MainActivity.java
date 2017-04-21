@@ -20,19 +20,22 @@ import java.util.List;
  * Created by bm on 15/04/17.
  */
 
-public class MainActivity extends ListActivity
+public class MainActivity extends AppCompatActivity
 {
     private String path = "/";
     String[] currentDirList;
     ArrayList contents;
-    File currentDir;
     Boolean showHidden = false;
     ArrayAdapter<String> arrayAdapter;
+    private ListView lView;
 
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        lView = (ListView) findViewById(R.id.list);
+
         // set title to path
         path = "/";
         if (getIntent().hasExtra("path"))
