@@ -32,6 +32,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     FileAdapter fileAdapter;
     private ListView lView;
     File currentDir;
+    String parent;
 
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -54,29 +55,43 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         // set title to path
         path = Environment.getExternalStorageDirectory().getAbsolutePath();
+        currentDir = new File(path);
+        parent = currentDir.getParent();
         dirList(path);
     }
 
     public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
     {
         String fname = (String) fileAdapter.getItem(position);
-        if (path.endsWith(File.separator))
+
+        if (fname.equals(".."))
         {
-            fname = path + fname;
+            dirList(currentDir.getParent());
         }
         else
         {
-            fname = path + File.separator + fname;
-        }
+            if (path.endsWith(File.separator))
+            {
+                fname = path + fname;
+            }
+            else
+            {
+                fname = path + File.separator + fname;
+            }
 
-        if (new File(fname).isDirectory())
-        {
-            dirList(fname);
+            if (new File(fname).isDirectory())
+            {
+                dirList(fname);
+            }
         }
     }
 
-    private void dirList(String path)
+    private void dirList(String newPath)
     {
+        path = newPath;
+        currentDir = new File(path);
+        parent = currentDir.getParent();
+
         if (getIntent().hasExtra("path"))
         {
             path = getIntent().getStringExtra("path");
@@ -85,8 +100,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setTitle(path);
 
         // get names of current directory contents
-        currentDir = new File(path);
-
+        contents = new ArrayList();
         if (currentDir.canRead())
         {
             currentDirList = currentDir.list();
@@ -95,8 +109,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             if (currentDirList != null) {
                 if (showHidden) {
                     contents = new ArrayList(Arrays.asList(currentDirList));
-                } else {
-                    contents = new ArrayList();
+                }
+                else
+                {
                     // exclude hidden items
                     for (int i = 0; i < currentDirList.length; i++) {
                         if (!currentDirList[i].startsWith(".")) {
@@ -109,17 +124,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             // sort alphabetically
             Collections.sort(contents);
 
-            contents.add(0, "../");
-
-            // link file names to ListView using FileAdapter
-            fileAdapter = new FileAdapter(this, contents, path);
-            lView.setAdapter(fileAdapter);
-            lView.setOnItemClickListener(MainActivity.this);
+            if (parent != null)
+            {
+                contents.add(0, "..");
+            }
         }
         else
         {
             setTitle(path + " (unreachable)");
+            contents.add(0, "..");
         }
+        // link file names to ListView using FileAdapter
+        fileAdapter = new FileAdapter(this, contents, path);
+        lView.setAdapter(fileAdapter);
+        lView.setOnItemClickListener(MainActivity.this);
     }
 
 
