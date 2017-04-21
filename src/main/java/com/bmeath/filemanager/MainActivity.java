@@ -54,7 +54,29 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         // set title to path
         path = Environment.getExternalStorageDirectory().getAbsolutePath();
+        dirList(path);
+    }
 
+    public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
+    {
+        String fname = (String) fileAdapter.getItem(position);
+        if (path.endsWith(File.separator))
+        {
+            fname = path + fname;
+        }
+        else
+        {
+            fname = path + File.separator + fname;
+        }
+
+        if (new File(fname).isDirectory())
+        {
+            dirList(fname);
+        }
+    }
+
+    private void dirList(String path)
+    {
         if (getIntent().hasExtra("path"))
         {
             path = getIntent().getStringExtra("path");
@@ -87,7 +109,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             // sort alphabetically
             Collections.sort(contents);
 
-            // link to file names to ListView using FileAdapter
+            contents.add(0, "../");
+
+            // link file names to ListView using FileAdapter
             fileAdapter = new FileAdapter(this, contents, path);
             lView.setAdapter(fileAdapter);
             lView.setOnItemClickListener(MainActivity.this);
@@ -98,25 +122,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
-    public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
-    {
-        String fname = (String) fileAdapter.getItem(position);
-        if (path.endsWith(File.separator))
-        {
-            fname = path + fname;
-        }
-        else
-        {
-            fname = path + File.separator + fname;
-        }
-
-        if (new File(fname).isDirectory())
-        {
-            Intent intent = new Intent(this, MainActivity.class);
-            intent.putExtra("path", fname);
-            startActivity(intent);
-        }
-    }
 
 
 }
