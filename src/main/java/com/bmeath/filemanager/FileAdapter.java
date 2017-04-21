@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
+import java.text.DateFormat;
 import java.util.ArrayList;
 
 /**
@@ -21,12 +22,15 @@ public class FileAdapter extends BaseAdapter
     private Context context;
     private ArrayList<String> files;
     public static int[] icons = {R.drawable.folder_icon, R.drawable.file_icon};
+    private DateFormat dateFormat;
+
     private String path;
 
     public FileAdapter(Context context, ArrayList<String> files, String path) {
         this.context = context;
         this.files = files;
         this.path = path;
+        dateFormat = android.text.format.DateFormat.getDateFormat(context);
     }
 
     @Override
@@ -58,8 +62,10 @@ public class FileAdapter extends BaseAdapter
 
         TextView fileText = (TextView) convertView.findViewById(R.id.fileText);
         ImageView fileIcon = (ImageView) convertView.findViewById(R.id.fileIcon);
+        TextView fileModified = (TextView) convertView.findViewById(R.id.fileModified);
 
         String title = files.get(position);
+
         fileText.setText(title);
 
         if (new File(path + "/" + title).isDirectory())
@@ -69,6 +75,8 @@ public class FileAdapter extends BaseAdapter
         else
         {
             fileIcon.setImageResource(icons[1]);
+            long lastModified = new File(path + "/" + files.get(position)).lastModified();
+            fileModified.setText(dateFormat.format(lastModified));
         }
 
         return convertView;
