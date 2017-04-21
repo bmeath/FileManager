@@ -1,22 +1,17 @@
 package com.bmeath.filemanager;
 
-import android.app.ListActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.ListViewCompat;
-import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * Created by bm on 15/04/17.
@@ -24,14 +19,13 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener
 {
-    private String path = "/";
+    private String path = "/storage/emulated/0/";
     String[] currentDirList;
     ArrayList contents;
     Boolean showHidden = false;
     ArrayAdapter<String> arrayAdapter;
     FileAdapter fileAdapter;
     private ListView lView;
-    //private Toolbar tBar;
 
     protected void onCreate(Bundle savedInstanceState)
     {
@@ -75,7 +69,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         // sort alphabetically
         Collections.sort(contents);
 
-        // instantiate custom adapter
+        // link to file names to ListView using FileAdapter
         fileAdapter = new FileAdapter(this, contents);
         lView.setAdapter(fileAdapter);
         lView.setOnItemClickListener(MainActivity.this);

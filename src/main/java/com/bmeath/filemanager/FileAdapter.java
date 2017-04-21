@@ -2,7 +2,6 @@ package com.bmeath.filemanager;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +9,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.File;
 import java.util.ArrayList;
 
 /**
@@ -18,49 +18,56 @@ import java.util.ArrayList;
 
 public class FileAdapter extends BaseAdapter
 {
-    private static final String LOG_TAG = FileAdapter.class.getSimpleName();
-
-    private Context context_;
+    private Context context;
     private ArrayList<String> files;
+    public static int[] icons = {R.drawable.folder_icon, R.drawable.file_icon};
 
     public FileAdapter(Context context, ArrayList<String> files) {
-        this.context_ = context;
+        this.context = context;
         this.files = files;
     }
 
     @Override
-    public int getCount() {
+    public int getCount()
+    {
         return files.size();
     }
 
     @Override
-    public Object getItem(int position) {
+    public Object getItem(int position)
+    {
         return files.get(position);
     }
 
     @Override
-    public long getItemId(int position) {
+    public long getItemId(int position)
+    {
         return position;
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        if (convertView == null) {
-            LayoutInflater mInflater = (LayoutInflater)
-                    context_.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-
-            convertView = mInflater.inflate(R.layout.list_file, null);
+    public View getView(int position, View convertView, ViewGroup parent)
+    {
+        if (convertView == null)
+        {
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
+            convertView = inflater.inflate(R.layout.list_file, null);
         }
 
         TextView fileText = (TextView) convertView.findViewById(R.id.fileText);
         ImageView fileIcon = (ImageView) convertView.findViewById(R.id.fileIcon);
 
         String title = files.get(position);
-
-        //Log.d(LOG_TAG,"File: " + file + " fileIcon: " + icon);
-
         fileText.setText(title);
-        fileIcon.setImageURI();
+
+        if (new File(title).isDirectory())
+        {
+            fileIcon.setImageResource(icons[0]);
+        }
+        else
+        {
+            fileIcon.setImageResource(icons[1]);
+        }
 
         return convertView;
     }
