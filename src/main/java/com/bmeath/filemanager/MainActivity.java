@@ -5,7 +5,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.ListViewCompat;
+import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.ListView;
@@ -20,21 +22,23 @@ import java.util.List;
  * Created by bm on 15/04/17.
  */
 
-public class MainActivity extends AppCompatActivity
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener
 {
     private String path = "/";
     String[] currentDirList;
     ArrayList contents;
     Boolean showHidden = false;
     ArrayAdapter<String> arrayAdapter;
+    FileAdapter fileAdapter;
     private ListView lView;
+    //private Toolbar tBar;
 
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        lView = (ListView) findViewById(R.id.list);
+        lView = (ListView) findViewById(R.id.lView);
 
         // set title to path
         path = "/";
@@ -71,13 +75,15 @@ public class MainActivity extends AppCompatActivity
         // sort alphabetically
         Collections.sort(contents);
 
-        arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_2, android.R.id.text1, contents);
-        setListAdapter(arrayAdapter);
+        // instantiate custom adapter
+        fileAdapter = new FileAdapter(this, contents);
+        lView.setAdapter(fileAdapter);
+        lView.setOnItemClickListener(MainActivity.this);
     }
 
-    protected void onListItemClick(ListView l, View v, int position, long id)
+    public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
     {
-        String fname = (String) getListAdapter().getItem(position);
+        String fname = (String) fileAdapter.getItem(position);
         if (path.endsWith(File.separator))
         {
             fname = path + fname;
@@ -86,7 +92,7 @@ public class MainActivity extends AppCompatActivity
         {
             fname = path + File.separator + fname;
         }
-        
+
         if (new File(fname).isDirectory())
         {
             Intent intent = new Intent(this, MainActivity.class);
@@ -94,4 +100,5 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
         }
     }
+
 }
