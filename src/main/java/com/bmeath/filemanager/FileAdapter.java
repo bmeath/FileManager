@@ -21,10 +21,12 @@ public class FileAdapter extends BaseAdapter
     private Context context;
     private ArrayList<String> files;
     public static int[] icons = {R.drawable.folder_icon, R.drawable.file_icon};
+    private String path;
 
-    public FileAdapter(Context context, ArrayList<String> files) {
+    public FileAdapter(Context context, ArrayList<String> files, String path) {
         this.context = context;
         this.files = files;
+        this.path = path;
     }
 
     @Override
@@ -60,7 +62,7 @@ public class FileAdapter extends BaseAdapter
         String title = files.get(position);
         fileText.setText(title);
 
-        if (new File(title).isDirectory())
+        if (new File(path + "/" + title).isDirectory())
         {
             fileIcon.setImageResource(icons[0]);
         }
