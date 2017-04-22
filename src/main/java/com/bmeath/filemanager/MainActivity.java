@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -58,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        Toolbar tBar = (Toolbar) findViewById(R.id.tBar);
+        setSupportActionBar(tBar);
+
         // check if run-time permission requesting should be done
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1)
         {
@@ -81,6 +85,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         // set title to path
         cd(Environment.getExternalStorageDirectory().getAbsolutePath());
         ls();
+    }
+
+    public boolean onCreateOptionsMenu(Menu m)
+    {
+        getMenuInflater().inflate(R.menu.menu_main, m);
+        return true;
     }
 
     public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
@@ -111,15 +121,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     public boolean onContextItemSelected(MenuItem option) {
         String[] options = getResources().getStringArray(R.array.long_click_menu);
-        String action = options[option.getItemId()];
         File f = (File) fileAdapter.getItem(selectedMem);
 
-        switch(action)
+        switch(option.getItemId())
         {
-            case "Open":
+            case 0: // open
                 open(f);
                 break;
-            case "Cut":
+            case 1: // cut
                 try
                 {
                     cutMem = f.getCanonicalPath();
@@ -129,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     Toast.makeText(this, "Failed to select file for cut operation", Toast.LENGTH_SHORT).show();
                 }
                 break;
-            case "Copy":
+            case 2: // copy
                 try
                 {
                     copyMem = f.getCanonicalPath();
@@ -139,11 +148,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     Toast.makeText(this, "Failed to select file for copy operation", Toast.LENGTH_SHORT).show();
                 }
                 break;
-            case "Delete":
+            case 3: // delete
                 break;
-            case "Rename":
+            case 4: // rename
                 break;
-            case "Properties":
+            case 5: //properties
                 break;
             default:
 
