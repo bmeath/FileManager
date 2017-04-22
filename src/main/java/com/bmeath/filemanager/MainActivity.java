@@ -50,8 +50,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     String parent;
     Intent fileViewIntent = new Intent(Intent.ACTION_VIEW);
 
-    String cutMem;
-    String copyMem;
+    String clipboard;
+    MenuItem pasteOption;
+    boolean deleteAfterPaste;
     int selectedMem;
 
     protected void onCreate(Bundle savedInstanceState)
@@ -86,11 +87,42 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         cd(Environment.getExternalStorageDirectory().getAbsolutePath());
         ls();
     }
+    public boolean onPrepareOptionsMenu(Menu m)
+    {
+        if (clipboard == null) {
+            pasteOption.setVisible(false);
+        }
+        else
+        {
+            pasteOption.setVisible(true);
+        }
+        System.out.println("prepareOptionsMenu called");
+        return true;
+    }
 
     public boolean onCreateOptionsMenu(Menu m)
     {
         getMenuInflater().inflate(R.menu.menu_main, m);
+        pasteOption = m.findItem(R.id.paste);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.paste)
+        {
+            clipboard = null;
+            invalidateOptionsMenu();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
@@ -129,9 +161,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 open(f);
                 break;
             case 1: // cut
+                System.out.println("Clicked cut");
                 try
                 {
-                    cutMem = f.getCanonicalPath();
+                    clipboard = f.getCanonicalPath();
+                    deleteAfterPaste = true;
+                    invalidateOptionsMenu();
                 }
                 catch (IOException e)
                 {
@@ -141,7 +176,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             case 2: // copy
                 try
                 {
-                    copyMem = f.getCanonicalPath();
+                    clipboard = f.getCanonicalPath();
+                    deleteAfterPaste = false;
+                    invalidateOptionsMenu();
                 }
                 catch (IOException e)
                 {
