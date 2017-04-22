@@ -1,7 +1,6 @@
 package com.bmeath.filemanager;
 
 import android.Manifest;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,8 +23,7 @@ import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener
 {
-    private String path;
-    String[] currentDirList;
+    private File[] currentDirList;
     private static String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     ArrayList contents;
     Boolean showHidden = false;
@@ -54,56 +52,50 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         lView = (ListView) findViewById(R.id.lView);
 
         // set title to path
-        path = Environment.getExternalStorageDirectory().getAbsolutePath();
-        currentDir = new File(path);
-        parent = currentDir.getParent();
-        dirList(path);
+        cd(Environment.getExternalStorageDirectory().getAbsolutePath());
+        ls();
     }
 
     public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
     {
-        String fname = (String) fileAdapter.getItem(position);
+        File f = (File) fileAdapter.getItem(position);
 
-        if (fname.equals(".."))
+        if (f.isDirectory())
         {
-            dirList(currentDir.getParent());
-        }
-        else
-        {
-            if (path.endsWith(File.separator))
+            if (f.getName().equals(".."))
             {
-                fname = path + fname;
+                cd(currentDir.getParent());
+                ls();
             }
             else
             {
-                fname = path + File.separator + fname;
-            }
-
-            if (new File(fname).isDirectory())
-            {
-                dirList(fname);
+                cd(f.getAbsolutePath());
+                ls();
             }
         }
     }
 
-    private void dirList(String newPath)
+    private void cd(String newPath)
     {
-        path = newPath;
-        currentDir = new File(path);
-        parent = currentDir.getParent();
-
-        if (getIntent().hasExtra("path"))
+        if (newPath.equals("../"))
         {
-            path = getIntent().getStringExtra("path");
+            currentDir = currentDir.getParentFile();
         }
+        else
+        {
+            currentDir = new File(newPath);
+        }
+        parent = currentDir.getParent();
+        setTitle(newPath);
+    }
 
-        setTitle(path);
-
+    private void ls()
+    {
         // get names of current directory contents
         contents = new ArrayList();
         if (currentDir.canRead())
         {
-            currentDirList = currentDir.list();
+            currentDirList = currentDir.listFiles();
 
             // convert string array to arraylist
             if (currentDirList != null) {
@@ -113,8 +105,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 else
                 {
                     // exclude hidden items
-                    for (int i = 0; i < currentDirList.length; i++) {
-                        if (!currentDirList[i].startsWith(".")) {
+                    for (int i = 0; i < currentDirList.length; i++)
+                    {
+                        if (!currentDirList[i].isHidden())
+                        {
                             contents.add(currentDirList[i]);
                         }
                     }
@@ -126,20 +120,43 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             if (parent != null)
             {
-                contents.add(0, "..");
+                contents.add(0, new File("../"));
             }
         }
         else
         {
-            setTitle(path + " (unreachable)");
-            contents.add(0, "..");
+            setTitle(currentDir.getName() + " (unreachable)");
+            contents.add(0, new File("../"));
         }
+
         // link file names to ListView using FileAdapter
-        fileAdapter = new FileAdapter(this, contents, path);
+        fileAdapter = new FileAdapter(this, contents, currentDir.getName());
         lView.setAdapter(fileAdapter);
         lView.setOnItemClickListener(MainActivity.this);
     }
 
+    private boolean mkdir(String title)
+    {
+        return false;
+    }
 
+    private boolean mkFile()
+    {
+        return false;
+    }
 
+    private boolean rm(String path)
+    {
+        return false;
+    }
+
+    private boolean mv(String src, String dst)
+    {
+        return false;
+    }
+
+    private boolean cp(String src, String dst)
+    {
+        return false;
+    }
 }

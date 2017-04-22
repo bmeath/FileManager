@@ -20,13 +20,13 @@ import java.util.ArrayList;
 public class FileAdapter extends BaseAdapter
 {
     private Context context;
-    private ArrayList<String> files;
+    private ArrayList<File> files;
     public static int[] icons = {R.drawable.folder_icon, R.drawable.file_icon};
     private DateFormat dateFormat;
     private String title;
     private String path;
 
-    public FileAdapter(Context context, ArrayList<String> files, String path) {
+    public FileAdapter(Context context, ArrayList<File> files, String path) {
         this.context = context;
         this.files = files;
         this.path = path;
@@ -66,7 +66,7 @@ public class FileAdapter extends BaseAdapter
         ImageView fileIcon = (ImageView) convertView.findViewById(R.id.fileIcon);
         TextView fileModified = (TextView) convertView.findViewById(R.id.fileModified);
 
-        title = files.get(position);
+        title = files.get(position).getName();
 
         fileText.setText(title);
         fileModified.setText("");
