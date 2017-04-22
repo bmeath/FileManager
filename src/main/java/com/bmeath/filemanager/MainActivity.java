@@ -2,6 +2,7 @@ package com.bmeath.filemanager;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.provider.DocumentFile;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.webkit.MimeTypeMap;
@@ -31,7 +33,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private File[] currentDirList;
     private static String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private static MimeTypeMap mime = MimeTypeMap.getSingleton();
-    ArrayList contents;
+
+    private ArrayList contents;
+    private ArrayList contentsFiles;
+    private ArrayList contentsFolders;
+
     Boolean showHidden = true;
     FileAdapter fileAdapter;
     private ListView lView;
@@ -85,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         {
             // get mimetype from extension extracted from filename
             String ext = f.getName();
-            String mimeType = mime.getMimeTypeFromExtension(ext.substring(ext.lastIndexOf(".")));
+            String mimeType = mime.getMimeTypeFromExtension(ext.substring(ext.lastIndexOf(".")).toLowerCase());
 
             fileViewIntent.setDataAndType(Uri.fromFile(f), mimeType);
             fileViewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -96,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
             catch (ActivityNotFoundException e)
             {
-                Toast.makeText(this, "No applications were found to open this type of file.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "No applications were found for this type of file.", Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -124,23 +130,29 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     {
         // get names of current directory contents
         contents = new ArrayList();
+        contentsFiles = new ArrayList();
+
+
         if (currentDir.canRead())
         {
             currentDirList = currentDir.listFiles();
 
             // convert string array to arraylist
-            if (currentDirList != null) {
-                if (showHidden) {
-                    contents = new ArrayList(Arrays.asList(currentDirList));
-                }
-                else
+            if (currentDirList != null)
+            {
+                // exclude hidden items
+                for (int i = 0; i < currentDirList.length; i++)
                 {
-                    // exclude hidden items
-                    for (int i = 0; i < currentDirList.length; i++)
+                    if ((currentDirList[i].isHidden() && showHidden) || !currentDirList[i].isHidden())
                     {
-                        if (!currentDirList[i].isHidden())
+                        // keep files separate from folders for sorting purposes
+                        if (currentDirList[i].isDirectory())
                         {
                             contents.add(currentDirList[i]);
+                        }
+                        else
+                        {
+                            contentsFiles.add(currentDirList[i]);
                         }
                     }
                 }
@@ -148,6 +160,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
             // sort alphabetically
             Collections.sort(contents);
+            Collections.sort(contentsFiles);
+            contents.addAll(contentsFiles);
+
+
 
             if (parent != null)
             {
@@ -156,7 +172,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         else
         {
-            setTitle(currentDir.getName() + " (unreachable)");
             contents.add(0, new File("../"));
         }
 
