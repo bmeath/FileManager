@@ -15,13 +15,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -46,6 +49,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     String parent;
     Intent fileViewIntent = new Intent(Intent.ACTION_VIEW);
 
+    String cutMem;
+    String copyMem;
+    int selectedMem;
+
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
@@ -65,6 +72,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         lView = (ListView) findViewById(R.id.lView);
+        lView.setOnItemClickListener(this);
+        lView.setOnItemLongClickListener(this);
+        lView.setOnCreateContextMenuListener(this);
+
+
 
         // set title to path
         cd(Environment.getExternalStorageDirectory().getAbsolutePath());
@@ -73,8 +85,74 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
     {
-        File f = (File) fileAdapter.getItem(position);
+        open((File) fileAdapter.getItem(position));
+    }
 
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
+    {
+        selectedMem = position;
+        registerForContextMenu(lView);
+        openContextMenu(lView);
+        return true;
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
+    {
+        if (v.getId() == R.id.lView)
+        {
+            String[] options = getResources().getStringArray(R.array.long_click_menu);
+            for (int i = 0; i < options.length; i++)
+            {
+                menu.add(Menu.NONE, i, i, options[i]);
+            }
+        }
+    }
+
+    public boolean onContextItemSelected(MenuItem option) {
+        String[] options = getResources().getStringArray(R.array.long_click_menu);
+        String action = options[option.getItemId()];
+        File f = (File) fileAdapter.getItem(selectedMem);
+
+        switch(action)
+        {
+            case "Open":
+                open(f);
+                break;
+            case "Cut":
+                try
+                {
+                    cutMem = f.getCanonicalPath();
+                }
+                catch (IOException e)
+                {
+                    Toast.makeText(this, "Failed to select file for cut operation", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case "Copy":
+                try
+                {
+                    copyMem = f.getCanonicalPath();
+                }
+                catch (IOException e)
+                {
+                    Toast.makeText(this, "Failed to select file for copy operation", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case "Delete":
+                break;
+            case "Rename":
+                break;
+            case "Properties":
+                break;
+            default:
+
+        }
+        return true;
+    }
+
+    private void open(File f)
+    {
         if (f.isDirectory())
         {
             if (f.getName().equals(".."))
@@ -90,40 +168,27 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         else
         {
-            // get mimetype from extension extracted from filename
-            String ext = f.getName();
-            String mimeType = mime.getMimeTypeFromExtension(ext.substring(ext.lastIndexOf(".")).toLowerCase());
-
-            fileViewIntent.setDataAndType(Uri.fromFile(f), mimeType);
-            fileViewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-            try
-            {
-                startActivity(fileViewIntent);
-            }
-            catch (ActivityNotFoundException e)
-            {
-                Toast.makeText(this, "No applications were found for this type of file.", Toast.LENGTH_SHORT).show();
-            }
+            openFile(f);
         }
     }
 
-    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
+    private void openFile(File f)
     {
-        registerForContextMenu(parent);
-        openContextMenu(parent);
-        return true;
-    }
+        // get mimetype from extension extracted from filename
+        String ext = f.getName();
+        String mimeType = mime.getMimeTypeFromExtension(ext.substring(ext.lastIndexOf(".")).toLowerCase());
 
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
-    {
-        super.onCreateContextMenu(menu, v, menuInfo);
-        String[] options = getResources().getStringArray(R.array.long_click_menu);
-        for (int i = 0; i < options.length; i++)
+        fileViewIntent.setDataAndType(Uri.fromFile(f), mimeType);
+        fileViewIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        try
         {
-            menu.add(Menu.NONE, i, i, options[i]);
+            startActivity(fileViewIntent);
         }
-
+        catch (ActivityNotFoundException e)
+        {
+            Toast.makeText(this, "No applications were found for this type of file.", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void cd(String newPath)
@@ -193,8 +258,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         // link file names to ListView using FileAdapter
         fileAdapter = new FileAdapter(this, contents);
         lView.setAdapter(fileAdapter);
-        lView.setOnItemClickListener(this);
-        lView.setOnItemLongClickListener(this);
+        registerForContextMenu(lView);
     }
 
     private boolean mkdir(String title)
