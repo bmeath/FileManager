@@ -26,7 +26,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private File[] currentDirList;
     private static String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     ArrayList contents;
-    Boolean showHidden = false;
+    Boolean showHidden = true;
     FileAdapter fileAdapter;
     private ListView lView;
     File currentDir;
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         // link file names to ListView using FileAdapter
-        fileAdapter = new FileAdapter(this, contents, currentDir.getName());
+        fileAdapter = new FileAdapter(this, contents);
         lView.setAdapter(fileAdapter);
         lView.setOnItemClickListener(MainActivity.this);
     }

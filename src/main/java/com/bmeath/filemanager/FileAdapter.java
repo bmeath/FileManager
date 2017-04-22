@@ -23,13 +23,10 @@ public class FileAdapter extends BaseAdapter
     private ArrayList<File> files;
     public static int[] icons = {R.drawable.folder_icon, R.drawable.file_icon};
     private DateFormat dateFormat;
-    private String title;
-    private String path;
 
-    public FileAdapter(Context context, ArrayList<File> files, String path) {
+    public FileAdapter(Context context, ArrayList<File> files) {
         this.context = context;
         this.files = files;
-        this.path = path;
 
         // get a localised date format to use
         dateFormat = android.text.format.DateFormat.getDateFormat(context);
@@ -66,21 +63,19 @@ public class FileAdapter extends BaseAdapter
         ImageView fileIcon = (ImageView) convertView.findViewById(R.id.fileIcon);
         TextView fileModified = (TextView) convertView.findViewById(R.id.fileModified);
 
-        title = files.get(position).getName();
+        fileText.setText(files.get(position).getName());
 
-        fileText.setText(title);
-        fileModified.setText("");
-
-        if (new File(path + "/" + title).isFile())
+        if (files.get(position).isFile())
         {
             fileIcon.setImageResource(icons[1]);
-            long lastModified = new File(path + "/" + files.get(position)).lastModified();
+            long lastModified = files.get(position).lastModified();
             fileModified.setText(dateFormat.format(lastModified));
 
         }
         else
         {
             fileIcon.setImageResource(icons[0]);
+            fileModified.setText("");
         }
 
         return convertView;
