@@ -2,17 +2,19 @@ package com.bmeath.filemanager;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.provider.DocumentFile;
 import android.support.v7.app.AppCompatActivity;
+import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
@@ -21,7 +23,6 @@ import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 
 /**
@@ -109,7 +110,20 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
     {
-        return false;
+        registerForContextMenu(parent);
+        openContextMenu(parent);
+        return true;
+    }
+
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
+    {
+        super.onCreateContextMenu(menu, v, menuInfo);
+        String[] options = getResources().getStringArray(R.array.long_click_menu);
+        for (int i = 0; i < options.length; i++)
+        {
+            menu.add(Menu.NONE, i, i, options[i]);
+        }
+
     }
 
     private void cd(String newPath)
@@ -161,6 +175,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             // sort alphabetically
             Collections.sort(contents);
             Collections.sort(contentsFiles);
+            // now append files to folders
             contents.addAll(contentsFiles);
 
 
@@ -179,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         fileAdapter = new FileAdapter(this, contents);
         lView.setAdapter(fileAdapter);
         lView.setOnItemClickListener(this);
-        //lView.setOnItemLongClickListener(this);
+        lView.setOnItemLongClickListener(this);
     }
 
     private boolean mkdir(String title)

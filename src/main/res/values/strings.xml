@@ -1,3 +1,12 @@
 <resources>
     <string name="app_name">File Manager</string>
+    <string-array name="long_click_menu">
+        <item>Open</item>
+        <item>Cut</item>
+        <item>Copy</item>
+        <item>Delete</item>
+        <item>Rename</item>
+        <item>Properties</item>
+    </string-array>
+
 </resources>
