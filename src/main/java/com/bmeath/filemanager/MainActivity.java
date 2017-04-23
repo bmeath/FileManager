@@ -122,35 +122,31 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         if (id == R.id.paste)
         {
             String src = clipboard;
+            String dst;
             clipboard = null;
-            if (deleteAfterPaste)
-            {
-                try
-                {
-                    mv(src, currentDir.getCanonicalPath());
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-            else
-            {
-                try
-                {
-                    cp(src, currentDir.getCanonicalPath());
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-            invalidateOptionsMenu();
-            ls();
-            return true;
-        }
 
-        return super.onOptionsItemSelected(item);
+            try
+            {
+                dst = currentDir.getCanonicalPath() + File.separator + new File(src).getName();
+
+                if (deleteAfterPaste)
+                {
+                    mv(src, dst);
+                }
+                else
+                {
+                    cp(src, dst);
+                }
+                invalidateOptionsMenu();
+                ls();
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+
+        }
+        return true;
     }
 
     public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
