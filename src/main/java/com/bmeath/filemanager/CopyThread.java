@@ -14,8 +14,9 @@ import java.io.OutputStream;
 public class CopyThread extends Thread
 {
     String[] paths = new String[2];
+    boolean deleteSrc;
 
-    public CopyThread(String srcPath, String dstPath)
+    public CopyThread(String srcPath, String dstPath, boolean deleteSrc)
     {
         paths[0] = srcPath;
         paths[1] = dstPath;
@@ -24,9 +25,13 @@ public class CopyThread extends Thread
     public void run()
     {
         copy(paths[0], paths[1]);
+        if (deleteSrc)
+        {
+            DeleteThread.delete(paths[0]);
+        }
     }
 
-    public void copy(String srcPath, String dstPath)
+    public static void copy(String srcPath, String dstPath)
     {
         InputStream in = null;
         OutputStream out = null;

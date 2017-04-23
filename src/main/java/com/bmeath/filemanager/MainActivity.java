@@ -387,9 +387,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private boolean cp(String srcPath, String dstPath)
     {
-        Intent copyIntent = new Intent(this, CopyService.class);
+        Intent copyIntent = new Intent(this, IOService.class);
         copyIntent.putExtra("SRC_PATH", srcPath);
         copyIntent.putExtra("DST_PATH", dstPath);
+        copyIntent.putExtra("MODE", "COPY");
         startService(copyIntent);
         /*
          * TODO: get result of copy operation from service
