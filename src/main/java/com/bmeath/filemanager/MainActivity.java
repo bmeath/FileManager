@@ -25,7 +25,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -96,7 +101,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         {
             pasteOption.setVisible(true);
         }
-        System.out.println("prepareOptionsMenu called");
         return true;
     }
 
@@ -117,8 +121,32 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         //noinspection SimplifiableIfStatement
         if (id == R.id.paste)
         {
+            String src = clipboard;
             clipboard = null;
+            if (deleteAfterPaste)
+            {
+                try
+                {
+                    mv(src, currentDir.getCanonicalPath());
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+            else
+            {
+                try
+                {
+                    cp(src, currentDir.getCanonicalPath());
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
             invalidateOptionsMenu();
+            ls();
             return true;
         }
 
@@ -165,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 try
                 {
                     clipboard = f.getCanonicalPath();
+                    System.out.println(clipboard);
                     deleteAfterPaste = true;
                     invalidateOptionsMenu();
                 }
@@ -177,6 +206,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 try
                 {
                     clipboard = f.getCanonicalPath();
+                    System.out.println(clipboard);
                     deleteAfterPaste = false;
                     invalidateOptionsMenu();
                 }
@@ -319,16 +349,60 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private boolean rm(String path)
     {
+        new File(path).delete();
+        return true;
+    }
+
+    private boolean mv(String srcPath, String dstPath) {
+        if (cp(srcPath, dstPath))
+        {
+            rm(srcPath);
+            return true;
+        }
         return false;
     }
 
-    private boolean mv(String src, String dst)
+    private boolean cp(String srcPath, String dstPath)
     {
-        return false;
-    }
+        InputStream in = null;
+        OutputStream out = null;
+        try
+        {
+            File src = new File(srcPath);
+            File dst = new File(dstPath);
+            /*if (!dst.exists())
+            {
+                dst.mkdirs();
+            }*/
 
-    private boolean cp(String src, String dst)
-    {
+
+            in = new FileInputStream(srcPath);
+            out = new FileOutputStream(dstPath + File.separator + src.getName());
+
+            byte[] buffer = new byte[1024];
+            int read;
+            while ((read = in.read(buffer)) != -1)
+            {
+                out.write(buffer, 0, read);
+            }
+            in.close();
+            in = null;
+
+            // write the output file
+            out.flush();
+            out.close();
+            out = null;
+
+            return true;
+        }
+        catch (FileNotFoundException fnfe)
+        {
+            fnfe.printStackTrace();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
         return false;
     }
 }
