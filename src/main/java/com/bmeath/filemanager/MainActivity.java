@@ -4,7 +4,6 @@ import android.Manifest;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,13 +14,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.ContextMenu;
 import android.view.Menu;
-import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -112,13 +109,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.paste)
         {
             String src = clipboard;
@@ -132,11 +126,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 if (deleteAfterPaste)
                 {
                     mv(src, dst);
+                    Toast.makeText(this, "Moving items...", Toast.LENGTH_SHORT).show();
                 }
                 else
                 {
                     cp(src, dst);
+                    Toast.makeText(this, "Copying items...", Toast.LENGTH_SHORT).show();
                 }
+
                 invalidateOptionsMenu();
                 ls();
             }
@@ -212,6 +209,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 try
                 {
                     rm(f.getCanonicalPath());
+                    Toast.makeText(this, "Items deleted successfully", Toast.LENGTH_SHORT).show();
                     ls();
                 }
                 catch (IOException e)
@@ -377,10 +375,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return false;
     }
 
-    private boolean mv(String srcPath, String dstPath) {
+    private boolean mv(String srcPath, String dstPath)
+    {
         if (cp(srcPath, dstPath))
         {
-            System.out.println("Successful copy, now to delete...");
             rm(srcPath);
             return true;
         }
@@ -389,62 +387,13 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private boolean cp(String srcPath, String dstPath)
     {
-        InputStream in = null;
-        OutputStream out = null;
-        try
-        {
-            File src = new File(srcPath);
-            File dst = new File(dstPath);
-
-            if (src.isDirectory())
-            {
-                if (!dst.exists())
-                {
-                    dst.mkdirs();
-                }
-
-                String[] files = src.list();
-
-                for (int i = 0; i < files.length; i++)
-                {
-                    String newSrc = new File(src, files[i]).getCanonicalPath();
-                    String newDst = new File(dst, files[i]).getCanonicalPath();
-                    // recursively copy all sub-items
-                    cp(newSrc, newDst);
-                }
-            }
-            else
-            {
-                in = new FileInputStream(srcPath);
-                if (new File(dstPath).isDirectory())
-                {
-                    dstPath += File.separator + src.getName();
-                }
-                out = new FileOutputStream(dstPath);
-
-                byte[] buffer = new byte[1024];
-                int read;
-                while ((read = in.read(buffer)) != -1) {
-                    out.write(buffer, 0, read);
-                }
-                in.close();
-                in = null;
-
-                // write the output file
-                out.flush();
-                out.close();
-                out = null;
-            }
-            return true;
-        }
-        catch (FileNotFoundException fnfe)
-        {
-            fnfe.printStackTrace();
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        return false;
+        Intent copyIntent = new Intent(this, CopyService.class);
+        copyIntent.putExtra("SRC_PATH", srcPath);
+        copyIntent.putExtra("DST_PATH", dstPath);
+        startService(copyIntent);
+        /*
+         * TODO: get result of copy operation from service
+         */
+        return true;
     }
 }
