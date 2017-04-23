@@ -189,11 +189,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 open(f);
                 break;
             case 1: // cut
-                System.out.println("Clicked cut");
                 try
                 {
                     clipboard = f.getCanonicalPath();
-                    System.out.println(clipboard);
                     deleteAfterPaste = true;
                     invalidateOptionsMenu();
                 }
@@ -206,7 +204,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 try
                 {
                     clipboard = f.getCanonicalPath();
-                    System.out.println(clipboard);
                     deleteAfterPaste = false;
                     invalidateOptionsMenu();
                 }
@@ -216,6 +213,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
                 break;
             case 3: // delete
+                try
+                {
+                    rm(f.getCanonicalPath());
+                    ls();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
                 break;
             case 4: // rename
                 break;
@@ -349,13 +355,36 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private boolean rm(String path)
     {
-        new File(path).delete();
-        return true;
+        File f = new File(path);
+        if (f.isDirectory())
+        {
+            String[] files = f.list();
+            for (int i = 0; i < files.length; i++)
+            {
+                try
+                {
+                    rm(new File(f, files[i]).getCanonicalPath());
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+            // all sub-items have been deleted, now delete the empty folder
+            f.delete();
+        }
+        else
+        {
+            f.delete();
+            return true;
+        }
+        return false;
     }
 
     private boolean mv(String srcPath, String dstPath) {
         if (cp(srcPath, dstPath))
         {
+            System.out.println("Successful copy, now to delete...");
             rm(srcPath);
             return true;
         }
@@ -370,29 +399,46 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         {
             File src = new File(srcPath);
             File dst = new File(dstPath);
-            /*if (!dst.exists())
+
+            if (src.isDirectory())
             {
-                dst.mkdirs();
-            }*/
+                if (!dst.exists())
+                {
+                    dst.mkdirs();
+                }
 
+                String[] files = src.list();
 
-            in = new FileInputStream(srcPath);
-            out = new FileOutputStream(dstPath + File.separator + src.getName());
-
-            byte[] buffer = new byte[1024];
-            int read;
-            while ((read = in.read(buffer)) != -1)
-            {
-                out.write(buffer, 0, read);
+                for (int i = 0; i < files.length; i++)
+                {
+                    String newSrc = new File(src, files[i]).getCanonicalPath();
+                    String newDst = new File(dst, files[i]).getCanonicalPath();
+                    // recursively copy all sub-items
+                    cp(newSrc, newDst);
+                }
             }
-            in.close();
-            in = null;
+            else
+            {
+                in = new FileInputStream(srcPath);
+                if (new File(dstPath).isDirectory())
+                {
+                    dstPath += File.separator + src.getName();
+                }
+                out = new FileOutputStream(dstPath);
 
-            // write the output file
-            out.flush();
-            out.close();
-            out = null;
+                byte[] buffer = new byte[1024];
+                int read;
+                while ((read = in.read(buffer)) != -1) {
+                    out.write(buffer, 0, read);
+                }
+                in.close();
+                in = null;
 
+                // write the output file
+                out.flush();
+                out.close();
+                out = null;
+            }
             return true;
         }
         catch (FileNotFoundException fnfe)
