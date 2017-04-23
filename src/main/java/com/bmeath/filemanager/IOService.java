@@ -44,7 +44,9 @@ public class IOService extends Service
                 t = new DeleteThread(paths[0]);
                 break;
             default:
+                // no mode specified
                 stopSelf();
+                return START_NOT_STICKY;
         }
         t.start();
         return START_NOT_STICKY;

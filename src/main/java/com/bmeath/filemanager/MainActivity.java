@@ -218,6 +218,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 }
                 break;
             case 4: // rename
+                rename(f);
                 break;
             case 5: //properties
                 break;
@@ -349,40 +350,27 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private boolean rm(String path)
     {
-        File f = new File(path);
-        if (f.isDirectory())
-        {
-            String[] files = f.list();
-            for (int i = 0; i < files.length; i++)
-            {
-                try
-                {
-                    rm(new File(f, files[i]).getCanonicalPath());
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-            // all sub-items have been deleted, now delete the empty folder
-            f.delete();
-        }
-        else
-        {
-            f.delete();
-            return true;
-        }
-        return false;
+        Intent deleteIntent = new Intent(this, IOService.class);
+        deleteIntent.putExtra("SRC_PATH", path);
+        deleteIntent.putExtra("MODE", "DELETE");
+        startService(deleteIntent);
+        /*
+             * TODO: get result of delete operation from service
+         */
+        return true;
     }
 
     private boolean mv(String srcPath, String dstPath)
     {
-        if (cp(srcPath, dstPath))
-        {
-            rm(srcPath);
-            return true;
-        }
-        return false;
+        Intent cutIntent = new Intent(this, IOService.class);
+        cutIntent.putExtra("SRC_PATH", srcPath);
+        cutIntent.putExtra("DST_PATH", dstPath);
+        cutIntent.putExtra("MODE", "CUT");
+        startService(cutIntent);
+        /*
+         * TODO: get result of cut operation from service
+         */
+        return true;
     }
 
     private boolean cp(String srcPath, String dstPath)
@@ -396,5 +384,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
          * TODO: get result of copy operation from service
          */
         return true;
+    }
+
+    public boolean rename(File f)
+    {
+        
     }
 }

@@ -7,7 +7,7 @@ import java.io.IOException;
  * Created by bm on 23/04/17.
  */
 
-class DeleteThread extends Thread {
+public class DeleteThread extends Thread {
 
     private String path;
 
