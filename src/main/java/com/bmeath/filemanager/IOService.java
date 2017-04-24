@@ -11,6 +11,8 @@ import java.util.Observer;
 
 /**
  * Created by bm on 23/04/17.
+ *
+ * A service to manage I/O operations in the background on a separate thread
  */
 
 public class IOService extends Service implements Observer
@@ -30,7 +32,6 @@ public class IOService extends Service implements Observer
     }
 
     private Handler handler;
-    IBinder binder;
     Thread t;
 
     public IBinder onBind(Intent intent)
@@ -67,15 +68,10 @@ public class IOService extends Service implements Observer
         return START_NOT_STICKY;
     }
 
-    public void onDestroy()
-    {
-        handler.post(new ResultToast("Service is being destroyed"));
-        super.onDestroy();
-    }
-
     public void update(Observable o, Object arg)
     {
         handler.post(new ResultToast((String) arg));
+        stopSelf();
     }
 
 }

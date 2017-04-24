@@ -27,10 +27,10 @@ public class DeleteThread extends Observable implements Runnable
 
     public void run()
     {
-        finished = delete(path);
+        finished = FileHelpers.delete(path);
         setChanged();
         if (finished) {
-            notifyObservers("Delete finished successfully");
+            notifyObservers("Deletion succeeded");
         }
         else
         {
@@ -39,33 +39,6 @@ public class DeleteThread extends Observable implements Runnable
     }
 
 
-    public static boolean delete(String path)
-    {
-        File f = new File(path);
-        if (f.isDirectory())
-        {
-            String[] files = f.list();
-            for (int i = 0; i < files.length; i++)
-            {
-                try
-                {
-                    delete(new File(f, files[i]).getCanonicalPath());
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                    return false;
-                }
-            }
-            // all sub-items have been deleted, now delete the empty folder
-            f.delete();
-            return true;
-        }
-        else
-        {
-            f.delete();
-            return true;
-        }
-    }
+
 
 }

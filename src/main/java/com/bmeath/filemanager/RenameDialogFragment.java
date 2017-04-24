@@ -22,7 +22,6 @@ import java.io.File;
 
 public class RenameDialogFragment extends DialogFragment
 {
-    private static final String[] ILLEGAL_CHARS = {"\\", "/", ":", "*", "?", "'", "<", ">", "|"};
     private EditText nameInput;
     private File f;
     private String newName;
@@ -47,7 +46,7 @@ public class RenameDialogFragment extends DialogFragment
                         newName = nameInput.getText().toString();
                         File newFile = new File(f.getParent() + File.separator + newName);
 
-                        if (isValidFilename(newName, ILLEGAL_CHARS))
+                        if (FileHelpers.isValidFilename(newName))
                         {
                             if (!newFile.exists() && !newName.equals(oldName))
                             {
@@ -65,26 +64,9 @@ public class RenameDialogFragment extends DialogFragment
                 {
                     public void onClick(DialogInterface dialog, int id)
                     {
+                        dismiss();
                     }
                 });
         return builder.create();
     }
-
-    public boolean isValidFilename(String s, String[] illegalChars)
-    {
-        for (int i = 0; i < illegalChars.length; i ++)
-        {
-            if (s.contains(illegalChars[i]))
-            {
-                return false;
-            }
-        }
-        if (s.charAt(s.length()-1) == '.')
-        {
-            return false;
-        }
-        return true;
-    }
-
-
 }
