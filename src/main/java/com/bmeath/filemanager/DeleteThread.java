@@ -16,6 +16,12 @@ public class DeleteThread extends Thread {
         this.path = path;
     }
 
+    public void run()
+    {
+        delete(path);
+    }
+
+
     public static void delete(String path)
     {
         File f = new File(path);
