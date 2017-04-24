@@ -55,7 +55,10 @@ public class RenameDialogFragment extends DialogFragment
                                 dismiss();
                             }
                         }
-                        Toast.makeText(getContext(), "Invalid filename!", Toast.LENGTH_SHORT).show();
+                        else
+                        {
+                            Toast.makeText(getContext(), "Invalid filename!", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
         builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener()

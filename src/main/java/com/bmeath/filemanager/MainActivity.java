@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Observable;
+import java.util.Observer;
 
 /**
  * Created by bm on 15/04/17.
@@ -76,14 +78,12 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                     ActivityCompat.requestPermissions(this, new String[]{permissions[i]}, 0);
                 }
             }
-
         }
 
         lView = (ListView) findViewById(R.id.lView);
         lView.setOnItemClickListener(this);
         lView.setOnItemLongClickListener(this);
         lView.setOnCreateContextMenuListener(this);
-
 
         // set title to path
         cd(Environment.getExternalStorageDirectory().getAbsolutePath());
@@ -147,7 +147,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
     {
-        open((File) fileAdapter.getItem(position));
+        File f = (File) fileAdapter.getItem(position);
+        if (f.exists())
+        {
+            open(f);
+        }
+        else
+        {
+            itemDeletedToast();
+        }
     }
 
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
@@ -170,66 +178,73 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
-    public boolean onContextItemSelected(MenuItem option) {
+    public boolean onContextItemSelected(MenuItem option)
+    {
         String[] options = getResources().getStringArray(R.array.long_click_menu);
         File f = (File) fileAdapter.getItem(selectedMem);
-
-        switch(option.getItemId())
+        if (f.exists())
         {
-            case 0: // open
-                open(f);
-                break;
-            case 1: // cut
-                try
-                {
-                    clipboard = f.getCanonicalPath();
-                    deleteAfterPaste = true;
-                    invalidateOptionsMenu();
-                }
-                catch (IOException e)
-                {
-                    Toast.makeText(this, "Failed to select file for cut operation", Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case 2: // copy
-                try
-                {
-                    clipboard = f.getCanonicalPath();
-                    deleteAfterPaste = false;
-                    invalidateOptionsMenu();
-                }
-                catch (IOException e)
-                {
-                    Toast.makeText(this, "Failed to select file for copy operation", Toast.LENGTH_SHORT).show();
-                }
-                break;
-            case 3: // delete
-                try
-                {
-                    rm(f.getCanonicalPath());
-                    Toast.makeText(this, "Deleting...", Toast.LENGTH_SHORT).show();
-                    ls();
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-                break;
-            case 4: // rename
-                try
-                {
-                    rename(f.getCanonicalPath());
-                    ls();
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-                break;
-            case 5: //properties
-                break;
-            default:
+            switch (option.getItemId())
+            {
+                case 0: // open
+                    open(f);
+                    break;
+                case 1: // cut
+                    try
+                    {
+                        clipboard = f.getCanonicalPath();
+                        deleteAfterPaste = true;
+                        invalidateOptionsMenu();
+                    }
+                    catch (IOException e)
+                    {
+                        Toast.makeText(this, "Failed to select file for cut operation", Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case 2: // copy
+                    try
+                    {
+                        clipboard = f.getCanonicalPath();
+                        deleteAfterPaste = false;
+                        invalidateOptionsMenu();
+                    }
+                    catch (IOException e)
+                    {
+                        Toast.makeText(this, "Failed to select file for copy operation", Toast.LENGTH_SHORT).show();
+                    }
+                    break;
+                case 3: // delete
+                    try
+                    {
+                        rm(f.getCanonicalPath());
+                        Toast.makeText(this, "Deleting...", Toast.LENGTH_SHORT).show();
+                        ls();
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                    break;
+                case 4: // rename
+                    try
+                    {
+                        rename(f.getCanonicalPath());
+                        ls();
+                    }
+                    catch (IOException e)
+                    {
+                        e.printStackTrace();
+                    }
+                    break;
+                case 5: //properties
+                    break;
+                default:
 
+            }
+        }
+        else
+        {
+            itemDeletedToast();
         }
         return true;
     }
@@ -400,4 +415,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         startService(i);
     }
 
+    public void itemDeletedToast()
+    {
+        Toast.makeText(this, "Error: this file/folder no longer exists!", Toast.LENGTH_SHORT);
+        ls();
+    }
 }
