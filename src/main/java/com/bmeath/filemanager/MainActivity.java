@@ -353,16 +353,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         registerForContextMenu(lView);
     }
 
-    public boolean rename(String path)
-    {
-        Bundle args = new Bundle();
-        args.putString("path", path);
-        DialogFragment renameFragment = new RenameDialogFragment();
-        renameFragment.setArguments(args);
-        renameFragment.show(getSupportFragmentManager(), "rename");
-        return true;
-    }
-
     private boolean mkdir() {
         return startNewFileDialog("folder");
     }
@@ -412,6 +402,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         DialogFragment mkFileFragment = new NewFileDialogFragment();
         mkFileFragment.setArguments(args);
         mkFileFragment.show(getSupportFragmentManager(), mode);
+        return true;
+    }
+
+    public boolean rename(String path)
+    {
+        Bundle args = new Bundle();
+        args.putString("path", path);
+        DialogFragment renameFragment = new RenameDialogFragment();
+        renameFragment.setArguments(args);
+        renameFragment.show(getSupportFragmentManager(), "rename");
         return true;
     }
 

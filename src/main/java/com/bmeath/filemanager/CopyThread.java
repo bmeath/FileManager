@@ -16,6 +16,7 @@ public class CopyThread extends Observable implements Runnable
     {
         paths[0] = srcPath;
         paths[1] = dstPath;
+        this.deleteSrc = deleteSrc;
         addObserver(observer);
     }
 
@@ -24,11 +25,22 @@ public class CopyThread extends Observable implements Runnable
         finished = FileHelpers.copy(paths[0], paths[1]);
         if (deleteSrc)
         {
-            finished = false;
             finished = FileHelpers.delete(paths[0]);
+
+            if (finished)
+            {
+                notifyObservers("Cut succeeded");
+            }
+            else
+            {
+                notifyObservers("Cut finished with errors");
+            }
         }
+
         setChanged();
-        if (finished) {
+
+        if (finished)
+        {
             notifyObservers("Copy succeeded");
         }
         else
