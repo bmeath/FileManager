@@ -14,7 +14,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.ContextMenu;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -252,7 +251,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                         e.printStackTrace();
                     }
                     break;
-                case 5: //properties
+                case 5: // properties
+                    startPropsDialog(f);
                     break;
                 default:
 
@@ -441,6 +441,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         mkFileFragment.setArguments(args);
         mkFileFragment.show(getSupportFragmentManager(), mode);
         return true;
+    }
+
+    private void startPropsDialog(File f)
+    {
+        Bundle args = new Bundle();
+        args.putSerializable("file", f);
+        DialogFragment propsFragment = new PropsDialogFragment();
+        propsFragment.setArguments(args);
+        propsFragment.show(getSupportFragmentManager(), "props");
     }
 
     private void fileMissingHandler()

@@ -43,7 +43,7 @@ public class NewFileDialogFragment extends DialogFragment
             return null;
         }
 
-        View v = View.inflate(getActivity(), R.layout.file_rename, null);
+        View v = View.inflate(getActivity(), R.layout.file_namer, null);
         nameInput = (EditText) v.findViewById(R.id.renameEditText);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
