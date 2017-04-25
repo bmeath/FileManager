@@ -17,6 +17,7 @@ import java.io.OutputStream;
 public class FileHelpers
 {
     private static final String[] ILLEGAL_CHARS = {"\\", "/", ":", "*", "?", "'", "<", ">", "|"};
+    private static final String RENAME_APPEND = "-copy";
 
     public static boolean isValidFilename(String s)
     {
@@ -63,10 +64,17 @@ public class FileHelpers
             else
             {
                 in = new FileInputStream(srcPath);
+
                 if (new File(dstPath).isDirectory())
                 {
                     dstPath += File.separator + src.getName();
                 }
+
+                if (new File(dstPath).exists())
+                {
+                    dstPath = renameCopy(dstPath);
+                }
+
                 out = new FileOutputStream(dstPath);
 
                 byte[] buffer = new byte[1024];
@@ -113,14 +121,39 @@ public class FileHelpers
                     return false;
                 }
             }
-            // all sub-items have been deleted, now delete the empty folder
-            f.delete();
-            return true;
         }
-        else
-        {
-            f.delete();
-            return true;
-        }
+        // all sub-items have been deleted, now delete the empty folder
+        f.delete();
+        return true;
     }
+
+
+    /*
+     * Returns a unique file path to avoid overwriting a file of the same name
+     */
+    public static String renameCopy(String path)
+    {
+        String uniquePath = path;
+
+        while (new File(uniquePath).exists())
+        {
+            int extIndex = (uniquePath.lastIndexOf('.'));
+
+            if (extIndex == -1)
+            {
+                uniquePath += RENAME_APPEND;
+            }
+            else
+            {
+                uniquePath = uniquePath.substring(0, extIndex) + RENAME_APPEND + uniquePath.substring(extIndex);
+            }
+
+            if (uniquePath.length() > 255)
+            {
+                return null;
+            }
+        }
+        return uniquePath;
+    }
+
 }

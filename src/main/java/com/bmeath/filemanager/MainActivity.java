@@ -34,6 +34,7 @@ import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener
 {
+    private static final int REQUEST_CONSTANT = 1;
     private static String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private static MimeTypeMap mime = MimeTypeMap.getSingleton();
 
@@ -83,7 +84,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 int havePermission = ContextCompat.checkSelfPermission(this, permissions[i]);
                 if (havePermission == PackageManager.PERMISSION_DENIED)
                 {
-                    ActivityCompat.requestPermissions(this, new String[]{permissions[i]}, 0);
+                    ActivityCompat.requestPermissions(this, new String[]{permissions[i]}, REQUEST_CONSTANT);
                 }
             }
         }
@@ -142,6 +143,19 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
 
         }
+
+        if (id == R.id.newfile)
+        {
+            mkFile();
+            ls();
+        }
+
+        if (id == R.id.newfolder)
+        {
+            mkdir();
+            ls();
+        }
+
         return true;
     }
 
@@ -276,17 +290,24 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     {
         // get mimetype from extension extracted from filename
         String ext = f.getName();
-        String mimeType = mime.getMimeTypeFromExtension(ext.substring(ext.lastIndexOf(".")).toLowerCase());
-
-        fileViewIntent.setDataAndType(Uri.fromFile(f), mimeType);
-
-        try
+        if (ext.lastIndexOf('.') != -1)
         {
-            startActivity(fileViewIntent);
+            String mimeType = mime.getMimeTypeFromExtension(ext.substring(ext.lastIndexOf(".")).toLowerCase());
+
+            fileViewIntent.setDataAndType(Uri.fromFile(f), mimeType);
+
+            try
+            {
+                startActivity(fileViewIntent);
+            }
+            catch (ActivityNotFoundException e)
+            {
+                Toast.makeText(this, "No applications were found for this type of file.", Toast.LENGTH_SHORT).show();
+            }
         }
-        catch (ActivityNotFoundException e)
+        else
         {
-            Toast.makeText(this, "No applications were found for this type of file.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Can't open a file of unknown type", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -370,11 +391,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return true;
     }
 
-    private boolean mkdir() throws IOException {
+    private boolean mkdir() {
         return startNewFileDialog("folder");
     }
 
-    private boolean mkFile() throws IOException {
+    private boolean mkFile() {
         return startNewFileDialog("file");
     }
 
@@ -424,7 +445,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     private void fileMissingHandler()
     {
-        Toast.makeText(this, "Error: this file/folder no longer exists!", Toast.LENGTH_SHORT);
+        Toast.makeText(this, "Error: this file/folder no longer exists!", Toast.LENGTH_SHORT).show();
         ls();
     }
 

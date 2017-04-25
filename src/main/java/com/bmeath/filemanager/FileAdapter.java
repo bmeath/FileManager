@@ -56,7 +56,7 @@ public class FileAdapter extends BaseAdapter
         if (convertView == null)
         {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-            convertView = inflater.inflate(R.layout.list_file, null);
+            convertView = inflater.inflate(R.layout.file_list, null);
         }
 
         TextView fileText = (TextView) convertView.findViewById(R.id.fileText);

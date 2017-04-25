@@ -38,6 +38,7 @@ public class RenameDialogFragment extends DialogFragment
         nameInput.setText(oldName);
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Rename");
+        builder.setMessage("Enter new name for " + oldName);
         builder.setView(v);
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener()
                 {
@@ -50,8 +51,15 @@ public class RenameDialogFragment extends DialogFragment
                         {
                             if (!newFile.exists() && !newName.equals(oldName))
                             {
-                                f.renameTo(newFile);
+                                if (f.renameTo(newFile))
+                                {
+                                    Toast.makeText(getContext(), "Renamed file", Toast.LENGTH_SHORT).show();
+                                }
                                 dismiss();
+                            }
+                            else
+                            {
+                                Toast.makeText(getContext(), "Failed to rename file!", Toast.LENGTH_SHORT).show();
                             }
                         }
                         else

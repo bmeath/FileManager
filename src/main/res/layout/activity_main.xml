@@ -7,8 +7,7 @@
     android:layout_height="match_parent">
 
     <android.support.v7.widget.Toolbar
-        app:theme="@style/ThemeOverlay.AppCompat.Light"
-        app:titleTextColor="@android:color/white"
+        android:theme="@style/ThemeOverlay.AppCompat.Light"
         android:id="@+id/tBar"
         android:minHeight="?attr/actionBarSize"
         android:layout_width="match_parent"

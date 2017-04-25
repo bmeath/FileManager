@@ -24,7 +24,6 @@ public class NewFileDialogFragment extends DialogFragment
 
     private static final String[] MODES = {"file", "folder"};
     private EditText nameInput;
-    private File f;
     private String newName;
     private String mode;
 
@@ -33,9 +32,9 @@ public class NewFileDialogFragment extends DialogFragment
     {
         Bundle args = getArguments();
 
-        f = new File(args.getString("path"));
+        final String path = args.getString("path");
 
-        // taking a mode parameter instead of duplicating this code for folder creation
+        // taking a mode parameter instead of duplicating this class for folder creation
         mode = args.getString("mode");
 
         // check that either file creation or folder creation has been specified
@@ -48,24 +47,29 @@ public class NewFileDialogFragment extends DialogFragment
         nameInput = (EditText) v.findViewById(R.id.renameEditText);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-        builder.setTitle("Enter new " + mode + " name:");
+        builder.setTitle("New " + mode);
+        builder.setMessage(mode + " will be created in " + path);
         builder.setView(v);
         builder.setPositiveButton("OK", new DialogInterface.OnClickListener()
         {
             public void onClick(DialogInterface dialog, int id)
             {
                 newName = nameInput.getText().toString();
-                File newFile = new File(f.getParent() + File.separator + newName);
-
                 if (FileHelpers.isValidFilename(newName))
                 {
-                        if (mode == "file")
+                    File f = new File(path + File.separator + newName);
+                    if (mode == "file")
                         {
                             try
                             {
                                 if (f.createNewFile())
                                 {
+                                    Toast.makeText(getContext(), "New " + mode + " created", Toast.LENGTH_SHORT).show();
                                     dismiss();
+                                }
+                                else
+                                {
+                                    errorToast();
                                 }
                             }
                             catch (IOException e)
@@ -77,11 +81,19 @@ public class NewFileDialogFragment extends DialogFragment
                         {
                             if (f.mkdir())
                             {
+                                Toast.makeText(getContext(), "New " + mode + " created", Toast.LENGTH_SHORT).show();
                                 dismiss();
+                            }
+                            else
+                            {
+                                errorToast();
                             }
                         }
                 }
-                Toast.makeText(getContext(), "Failed to create " + mode, Toast.LENGTH_SHORT).show();
+                else
+                {
+                    errorToast();
+                }
             }
         });
         builder.setNegativeButton("CANCEL", new DialogInterface.OnClickListener()
@@ -104,5 +116,10 @@ public class NewFileDialogFragment extends DialogFragment
             }
         }
         return false;
+    }
+
+    private void errorToast()
+    {
+        Toast.makeText(getContext(), "Failed to create " + mode, Toast.LENGTH_SHORT).show();
     }
 }

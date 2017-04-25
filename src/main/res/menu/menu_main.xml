@@ -2,8 +2,21 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
+        android:title="Paste"
         app:showAsAction="ifRoom"
         android:id="@+id/paste"
         android:icon="@drawable/paste_icon">
+    </item>
+    <item
+        android:title="New File"
+        app:showAsAction="ifRoom"
+        android:id="@+id/newfile"
+        android:icon="@drawable/newfile_icon">
+    </item>
+    <item
+        android:title="New Folder"
+        app:showAsAction="ifRoom"
+        android:id="@+id/newfolder"
+        android:icon="@drawable/newfolder_icon">
     </item>
 </menu>
