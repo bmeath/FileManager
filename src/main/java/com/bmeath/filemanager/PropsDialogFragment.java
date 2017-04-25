@@ -6,10 +6,9 @@ import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.DialogFragment;
 import android.view.View;
-import android.widget.EditText;
-import android.widget.Toast;
 
-import java.io.File;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 /**
  * Created by bm on 25/04/17.
@@ -19,27 +18,23 @@ import java.io.File;
 
 public class PropsDialogFragment extends DialogFragment
 {
-    private File f;
+    private HashMap<String, String> props;
+    private String msg = "";
 
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {
         Bundle args = getArguments();
-
-        f = (File) args.getSerializable("file");
 
         View v = View.inflate(getActivity(), R.layout.file_props, null);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Properties");
 
-        String msg = "Name: " + f.getName() + "\n";
-        if (f.isDirectory())
+        props = FileHelpers.getProperties(getContext(), args.getString("path"));
+
+        for (LinkedHashMap.Entry<String, String> entry : props.entrySet())
         {
-            msg += "Type: folder\n";
-        }
-        else
-        {
-            msg += "Type: file\n";
+           msg += entry.getKey() + ": " + entry.getValue() + "\n";
         }
 
         builder.setMessage(msg);
@@ -53,4 +48,5 @@ public class PropsDialogFragment extends DialogFragment
         });
         return builder.create();
     }
+
 }

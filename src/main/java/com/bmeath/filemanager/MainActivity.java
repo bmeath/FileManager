@@ -17,7 +17,6 @@ import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -35,7 +34,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 {
     private static final int REQUEST_CONSTANT = 1;
     private static String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
-    private static MimeTypeMap mime = MimeTypeMap.getSingleton();
 
     private ListView lView;
 
@@ -194,73 +192,47 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     public boolean onContextItemSelected(MenuItem option)
     {
         String[] options = getResources().getStringArray(R.array.long_click_menu);
+        String path;
 
         File f = (File) fileAdapter.getItem(selectedMem);
-
-        if (f.exists())
+        try
         {
+            path = f.getCanonicalPath();
+
             switch (option.getItemId())
             {
                 case 0: // open
                     open(f);
                     break;
                 case 1: // cut
-                    try
-                    {
-                        clipboard = f.getCanonicalPath();
-                        deleteAfterPaste = true;
-                        invalidateOptionsMenu();
-                    }
-                    catch (IOException e)
-                    {
-                        Toast.makeText(this, "Failed to select file for cut operation", Toast.LENGTH_SHORT).show();
-                    }
+                    clipboard = path;
+                    deleteAfterPaste = true;
+                    invalidateOptionsMenu();
                     break;
                 case 2: // copy
-                    try
-                    {
-                        clipboard = f.getCanonicalPath();
-                        deleteAfterPaste = false;
-                        invalidateOptionsMenu();
-                    }
-                    catch (IOException e)
-                    {
-                        Toast.makeText(this, "Failed to select file for copy operation", Toast.LENGTH_SHORT).show();
-                    }
+                    clipboard = path;
+                    deleteAfterPaste = false;
+                    invalidateOptionsMenu();
                     break;
                 case 3: // delete
-                    try
-                    {
-                        rm(f.getCanonicalPath());
-                        Toast.makeText(this, "Deleting...", Toast.LENGTH_SHORT).show();
-                        ls();
-                    }
-                    catch (IOException e)
-                    {
-                        e.printStackTrace();
-                    }
+                    rm(path);
+                    Toast.makeText(this, "Deleting...", Toast.LENGTH_SHORT).show();
+                    ls();
                     break;
                 case 4: // rename
-                    try
-                    {
-                        rename(f.getCanonicalPath());
-                        ls();
-                    }
-                    catch (IOException e)
-                    {
-                        e.printStackTrace();
-                    }
+                    rename(path);
+                    ls();
                     break;
                 case 5: // properties
-                    startPropsDialog(f);
+                    startPropsDialog(path);
                     break;
                 default:
-
             }
         }
-        else
+        catch (IOException e)
         {
-            fileMissingHandler();
+            Toast.makeText(this, "Failed to select file/folder", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
         }
         return true;
     }
@@ -282,18 +254,18 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         else
         {
-            openFile(f);
+            openFile(f.getAbsolutePath());
         }
     }
 
-    private void openFile(File f)
+    private void openFile(String path)
     {
         // get mimetype from extension extracted from filename
-        String ext = f.getName();
-        if (ext.lastIndexOf('.') != -1)
-        {
-            String mimeType = mime.getMimeTypeFromExtension(ext.substring(ext.lastIndexOf(".")).toLowerCase());
+        String mimeType = FileHelpers.getMimeType(path);
 
+        if (mimeType != null)
+        {
+            File f = new File(path);
             fileViewIntent.setDataAndType(Uri.fromFile(f), mimeType);
 
             try
@@ -443,10 +415,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return true;
     }
 
-    private void startPropsDialog(File f)
+    private void startPropsDialog(String path)
     {
         Bundle args = new Bundle();
-        args.putSerializable("file", f);
+        args.putString("path", path);
         DialogFragment propsFragment = new PropsDialogFragment();
         propsFragment.setArguments(args);
         propsFragment.show(getSupportFragmentManager(), "props");

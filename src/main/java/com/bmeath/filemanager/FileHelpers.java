@@ -6,6 +6,10 @@ package com.bmeath.filemanager;
  * A class in which I will contain helpful file-related methods
  */
 
+import android.content.Context;
+import android.text.format.Formatter;
+import android.webkit.MimeTypeMap;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,11 +17,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.text.DateFormat;
+import java.util.LinkedHashMap;
 
 public class FileHelpers
 {
     private static final String[] ILLEGAL_CHARS = {"\\", "/", ":", "*", "?", "'", "<", ">", "|"};
     private static final String RENAME_APPEND = "-copy";
+    private static final MimeTypeMap mime = MimeTypeMap.getSingleton();
 
     public static boolean isValidFilename(String s)
     {
@@ -155,5 +162,55 @@ public class FileHelpers
         }
         return uniquePath;
     }
+
+    public static LinkedHashMap<String, String> getProperties(Context context, String path)
+    {
+        DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(context);
+        File f = new File(path);
+        LinkedHashMap<String, String> props = new LinkedHashMap<>();
+
+        String name = f.getName();
+        props.put("Name", name);
+
+        if (f.isDirectory())
+        {
+            props.put("Type", "folder");
+        }
+        else
+        {
+            props.put("Type", getMimeType(name));
+        }
+
+        try
+        {
+            props.put("Location", f.getCanonicalPath());
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+
+        props.put("Size", Formatter.formatShortFileSize(context, f.length()));
+
+        props.put("Modified", dateFormat.format(f.lastModified()));
+        return props;
+    }
+
+    public static String getMimeType(String name)
+    {
+        // get mimetype using extension extracted from filename
+        String s = name;
+        int i = s.lastIndexOf(".") + 1;
+        if (i < s.length())
+        {
+            String mimeType = mime.getMimeTypeFromExtension(s.substring(i).toLowerCase());
+            return mimeType;
+        }
+        else
+        {
+            return null;
+        }
+    }
+
 
 }

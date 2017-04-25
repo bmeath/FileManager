@@ -1,9 +1,5 @@
 package com.bmeath.filemanager;
 
-import android.os.Looper;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.Observable;
 
 /**
