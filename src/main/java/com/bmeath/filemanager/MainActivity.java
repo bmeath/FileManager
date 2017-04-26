@@ -33,8 +33,6 @@ import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, SwipeRefreshLayout.OnRefreshListener
 {
-    private static final int REQUEST_CONSTANT = 1;
-    
     private static final String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     SwipeRefreshLayout swipeRefreshLayout;
@@ -64,17 +62,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setSupportActionBar(tBar);
         tBar.setTitleTextColor(0xFFFFFFFF);
 
+        // check if storage access permissions need to be requested
         getPermission();
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
 
-
         lView = (ListView) findViewById(R.id.lView);
         lView.setOnItemClickListener(this);
         lView.setOnItemLongClickListener(this);
         lView.setOnCreateContextMenuListener(this);
-
 
         // set current directory to external storage and list contents
         cd(Environment.getExternalStorageDirectory().getAbsolutePath());
@@ -91,7 +88,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 int havePermission = ContextCompat.checkSelfPermission(this, permissions[i]);
                 if (havePermission == PackageManager.PERMISSION_DENIED)
                 {
-                    ActivityCompat.requestPermissions(this, new String[]{permissions[i]}, REQUEST_CONSTANT);
+                    ActivityCompat.requestPermissions(this, new String[]{permissions[i]}, 1);
                 }
             }
         }
@@ -293,6 +290,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
     }
 
+    // set current directory
     private void cd(String newPath)
     {
         if (newPath.equals("../"))
@@ -326,7 +324,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 {
                     if ((currentDirList[i].isHidden() && showHidden) || !currentDirList[i].isHidden())
                     {
-                        // keep files separate from folders for sorting purposes
+                        // keep files separate from folders until later for sorting purposes
                         if (currentDirList[i].isDirectory())
                         {
                             contents.add(currentDirList[i]);
@@ -342,10 +340,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             // sort alphabetically
             Collections.sort(contents);
             Collections.sort(contentsFiles);
-            // now append files to folders
+            // now append files to folders, so that folders are at top of list
             contents.addAll(contentsFiles);
-
-
 
             if (parent != null)
             {
@@ -386,6 +382,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         startIOService(srcPath, dstPath, "COPY");
     }
 
+    // start a service to do IO tasks in a separate thread
     private void startIOService(String srcPath, String dstPath, String mode)
     {
         Intent i = new Intent(this, IOService.class);
@@ -425,6 +422,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         return true;
     }
 
+    // show file/folder properties
     private void startPropsDialog(String path)
     {
         Bundle args = new Bundle();
@@ -434,6 +432,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         propsFragment.show(getSupportFragmentManager(), "props");
     }
 
+    // called after swiping to refresh
     public void onRefresh()
     {
         ls();

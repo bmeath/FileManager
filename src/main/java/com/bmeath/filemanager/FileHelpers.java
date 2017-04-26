@@ -23,8 +23,7 @@ import java.util.LinkedHashMap;
 public class FileHelpers
 {
     private static final String[] ILLEGAL_CHARS = {"\\", "/", ":", "*", "?", "'", "<", ">", "|"};
-    private static final String RENAME_APPEND = "-copy";
-
+    private static final String RENAME_APPEND = "-copy"; // to prevent overwriting existing files
     private static final MimeTypeMap mime = MimeTypeMap.getSingleton();
 
     public static boolean isValidFilename(String s)
@@ -45,8 +44,8 @@ public class FileHelpers
 
     public static boolean copy(String srcPath, String dstPath)
     {
-        InputStream in = null;
-        OutputStream out = null;
+        InputStream in;
+        OutputStream out;
         try
         {
             File src = new File(srcPath);
@@ -87,16 +86,14 @@ public class FileHelpers
 
                 byte[] buffer = new byte[1024];
                 int read;
-                while ((read = in.read(buffer)) != -1) {
+                while ((read = in.read(buffer)) != -1)
+                {
                     out.write(buffer, 0, read);
                 }
-                in.close();
-                in = null;
 
-                // write the output file
+                in.close();
                 out.flush();
                 out.close();
-                out = null;
             }
             return true;
         }
@@ -135,7 +132,6 @@ public class FileHelpers
         return true;
     }
 
-
     /*
      * Returns a unique file path to avoid overwriting a file of the same name
      */
@@ -164,13 +160,16 @@ public class FileHelpers
         return uniquePath;
     }
 
+    /*
+     * returns a hashmap of properties of a file/folder
+     */
     public static LinkedHashMap<String, String> getProperties(Context context, String path)
     {
         DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(context);
         File f = new File(path);
         LinkedHashMap<String, String> props = new LinkedHashMap<>();
-
         String name = f.getName();
+
         props.put("Name", name);
 
         if (f.isDirectory())
@@ -194,6 +193,7 @@ public class FileHelpers
         props.put("Size", Formatter.formatShortFileSize(context, f.length()));
 
         props.put("Modified", dateFormat.format(f.lastModified()));
+
         return props;
     }
 

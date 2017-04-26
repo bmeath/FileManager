@@ -30,18 +30,18 @@ public class IOService extends Service implements Observer
 
     public int onStartCommand(final Intent intent, int flags, int startId)
     {
-        progressNotification = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
-        handler = new Handler();
-
-        nBuilder = new NotificationCompat.Builder(this);
-        nBuilder.setContentTitle("File Manager");
-        nBuilder.setSmallIcon(R.drawable.ic_stat_name);
-        nBuilder.setProgress(0, 0, true);
-
         final String[] paths = {
                 intent.getStringExtra("SRC_PATH"),
                 intent.getStringExtra("DST_PATH")
         };
+
+        progressNotification = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+        handler = new Handler();
+
+        nBuilder = new NotificationCompat.Builder(this);
+        nBuilder.setContentTitle(getResources().getString(R.string.app_name));
+        nBuilder.setSmallIcon(R.drawable.ic_stat_name);
+        nBuilder.setProgress(0, 0, true);
 
         String mode = intent.getStringExtra("MODE");
         switch (mode)

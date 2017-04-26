@@ -17,9 +17,10 @@ import java.io.File;
 
 public class RenameDialogFragment extends DialogFragment
 {
+
+    private String newName;
     private EditText nameInput;
     private File f;
-    private String newName;
 
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {

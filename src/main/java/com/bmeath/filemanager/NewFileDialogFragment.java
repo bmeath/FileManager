@@ -21,12 +21,10 @@ import java.io.IOException;
 
 public class NewFileDialogFragment extends DialogFragment
 {
-
     private static final String[] MODES = {"file", "folder"};
     private EditText nameInput;
     private String newName;
     private String mode;
-
 
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {
@@ -59,27 +57,10 @@ public class NewFileDialogFragment extends DialogFragment
                 {
                     File f = new File(path + File.separator + newName);
                     if (mode == "file")
+                    {
+                        try
                         {
-                            try
-                            {
-                                if (f.createNewFile())
-                                {
-                                    Toast.makeText(getContext(), "New " + mode + " created", Toast.LENGTH_SHORT).show();
-                                    dismiss();
-                                }
-                                else
-                                {
-                                    errorToast();
-                                }
-                            }
-                            catch (IOException e)
-                            {
-                                e.printStackTrace();
-                            }
-                        }
-                        else // folder
-                        {
-                            if (f.mkdir())
+                            if (f.createNewFile())
                             {
                                 Toast.makeText(getContext(), "New " + mode + " created", Toast.LENGTH_SHORT).show();
                                 dismiss();
@@ -89,6 +70,23 @@ public class NewFileDialogFragment extends DialogFragment
                                 errorToast();
                             }
                         }
+                        catch (IOException e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
+                    else // folder
+                    {
+                        if (f.mkdir())
+                        {
+                            Toast.makeText(getContext(), "New " + mode + " created", Toast.LENGTH_SHORT).show();
+                            dismiss();
+                        }
+                        else
+                        {
+                            errorToast();
+                        }
+                    }
                 }
                 else
                 {
@@ -106,6 +104,7 @@ public class NewFileDialogFragment extends DialogFragment
         return builder.create();
     }
 
+    /* check that the caller has specified what type of file they want to make */
     private boolean isValidMode(String m)
     {
         for (int i = 0; i < MODES.length; i++)

@@ -18,20 +18,22 @@ import java.util.LinkedHashMap;
 
 public class PropsDialogFragment extends DialogFragment
 {
-    private HashMap<String, String> props;
-    private String msg = "";
-
     public Dialog onCreateDialog(Bundle savedInstanceState)
     {
+        HashMap<String, String> props;
         Bundle args = getArguments();
+        View v;
+        AlertDialog.Builder builder;
+        String msg;
 
-        View v = View.inflate(getActivity(), R.layout.file_props, null);
+        v = View.inflate(getActivity(), R.layout.file_props, null);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        builder = new AlertDialog.Builder(getActivity());
         builder.setTitle("Properties");
 
         props = FileHelpers.getProperties(getContext(), args.getString("path"));
 
+        msg = "";
         for (LinkedHashMap.Entry<String, String> entry : props.entrySet())
         {
            msg += entry.getKey() + ": " + entry.getValue() + "\n";
@@ -46,7 +48,7 @@ public class PropsDialogFragment extends DialogFragment
                 dismiss();
             }
         });
+
         return builder.create();
     }
-
 }

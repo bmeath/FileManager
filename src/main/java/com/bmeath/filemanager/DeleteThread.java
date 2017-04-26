@@ -8,7 +8,6 @@ import java.util.Observable;
 
 public class DeleteThread extends Observable implements Runnable
 {
-
     private String path;
     boolean finished;
 
@@ -25,7 +24,8 @@ public class DeleteThread extends Observable implements Runnable
     {
         finished = FileHelpers.delete(path);
         setChanged();
-        if (finished) {
+        if (finished)
+        {
             notifyObservers("Deletion succeeded");
         }
         else
@@ -33,8 +33,4 @@ public class DeleteThread extends Observable implements Runnable
             notifyObservers("Delete finished with errors");
         }
     }
-
-
-
-
 }

@@ -11,7 +11,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.File;
-import java.text.DateFormat;
 import java.util.ArrayList;
 
 /**
@@ -20,11 +19,11 @@ import java.util.ArrayList;
 
 public class FileAdapter extends BaseAdapter
 {
-    private static int[] icons = {R.drawable.folder_icon, R.drawable.file_icon};
     private Context context;
     private ArrayList<File> files;
 
-    public FileAdapter(Context context, ArrayList<File> files) {
+    public FileAdapter(Context context, ArrayList<File> files)
+    {
         this.context = context;
         this.files = files;
     }
@@ -61,12 +60,12 @@ public class FileAdapter extends BaseAdapter
 
         if (f.isFile())
         {
-            fileIcon.setImageResource(icons[1]);
+            fileIcon.setImageResource(R.drawable.file_icon);
             fileSize.setText(Formatter.formatShortFileSize(context, f.length()));
         }
         else
         {
-            fileIcon.setImageResource(icons[0]);
+            fileIcon.setImageResource(R.drawable.folder_icon);
             fileSize.setText("");
         }
 
