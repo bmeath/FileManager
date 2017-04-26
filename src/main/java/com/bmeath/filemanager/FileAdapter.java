@@ -2,6 +2,7 @@ package com.bmeath.filemanager;
 
 import android.app.Activity;
 import android.content.Context;
+import android.text.format.Formatter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,38 +20,30 @@ import java.util.ArrayList;
 
 public class FileAdapter extends BaseAdapter
 {
+    private static int[] icons = {R.drawable.folder_icon, R.drawable.file_icon};
     private Context context;
     private ArrayList<File> files;
-    public static int[] icons = {R.drawable.folder_icon, R.drawable.file_icon};
-    private DateFormat dateFormat;
 
     public FileAdapter(Context context, ArrayList<File> files) {
         this.context = context;
         this.files = files;
-
-        // get a localised date format to use
-        dateFormat = android.text.format.DateFormat.getDateFormat(context);
     }
 
-    @Override
     public int getCount()
     {
         return files.size();
     }
 
-    @Override
     public Object getItem(int position)
     {
         return files.get(position);
     }
 
-    @Override
     public long getItemId(int position)
     {
         return position;
     }
 
-    @Override
     public View getView(int position, View convertView, ViewGroup parent)
     {
         if (convertView == null)
@@ -61,21 +54,20 @@ public class FileAdapter extends BaseAdapter
 
         TextView fileText = (TextView) convertView.findViewById(R.id.fileText);
         ImageView fileIcon = (ImageView) convertView.findViewById(R.id.fileIcon);
-        TextView fileModified = (TextView) convertView.findViewById(R.id.fileModified);
+        TextView fileSize = (TextView) convertView.findViewById(R.id.fileSize);
 
-        fileText.setText(files.get(position).getName());
+        File f = files.get(position);
+        fileText.setText(f.getName());
 
-        if (files.get(position).isFile())
+        if (f.isFile())
         {
             fileIcon.setImageResource(icons[1]);
-            long lastModified = files.get(position).lastModified();
-            fileModified.setText(dateFormat.format(lastModified));
-
+            fileSize.setText(Formatter.formatShortFileSize(context, f.length()));
         }
         else
         {
             fileIcon.setImageResource(icons[0]);
-            fileModified.setText("");
+            fileSize.setText("");
         }
 
         return convertView;

@@ -3,7 +3,6 @@ package com.bmeath.filemanager;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -21,16 +20,13 @@ import java.util.Observer;
 public class IOService extends Service implements Observer
 {
     private Thread t;
+
+    // Handler for generating Toasts
     private Handler handler;
 
     private int notifyId = 1;
     private NotificationManager progressNotification;
     private NotificationCompat.Builder nBuilder;
-
-    public IBinder onBind(Intent intent)
-    {
-        return null;
-    }
 
     public int onStartCommand(final Intent intent, int flags, int startId)
     {
@@ -38,8 +34,8 @@ public class IOService extends Service implements Observer
         handler = new Handler();
 
         nBuilder = new NotificationCompat.Builder(this);
-        nBuilder .setContentTitle("File Manager");
-        nBuilder .setSmallIcon(R.mipmap.ic_launcher_round);
+        nBuilder.setContentTitle("File Manager");
+        nBuilder.setSmallIcon(R.drawable.ic_stat_name);
         nBuilder.setProgress(0, 0, true);
 
         final String[] paths = {
@@ -86,8 +82,11 @@ public class IOService extends Service implements Observer
                 Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
             }
         });
-
         stopSelf();
     }
 
+    public IBinder onBind(Intent intent)
+    {
+        return null;
+    }
 }

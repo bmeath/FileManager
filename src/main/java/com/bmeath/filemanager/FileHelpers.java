@@ -24,6 +24,7 @@ public class FileHelpers
 {
     private static final String[] ILLEGAL_CHARS = {"\\", "/", ":", "*", "?", "'", "<", ">", "|"};
     private static final String RENAME_APPEND = "-copy";
+
     private static final MimeTypeMap mime = MimeTypeMap.getSingleton();
 
     public static boolean isValidFilename(String s)
@@ -211,6 +212,7 @@ public class FileHelpers
             return null;
         }
     }
+
 
 
 }

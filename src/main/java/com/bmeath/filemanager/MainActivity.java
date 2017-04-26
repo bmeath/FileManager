@@ -34,6 +34,7 @@ import java.util.Collections;
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, SwipeRefreshLayout.OnRefreshListener
 {
     private static final int REQUEST_CONSTANT = 1;
+    
     private static final String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
     SwipeRefreshLayout swipeRefreshLayout;
@@ -53,8 +54,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private boolean deleteAfterPaste;
     private int selectedMem;
 
-    IOService ioService;
-
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
@@ -63,6 +62,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         Toolbar tBar = (Toolbar) findViewById(R.id.tBar);
         setSupportActionBar(tBar);
+        tBar.setTitleTextColor(0xFFFFFFFF);
 
         getPermission();
 

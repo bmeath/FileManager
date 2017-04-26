@@ -44,7 +44,7 @@ public class RenameDialogFragment extends DialogFragment
 
                         if (FileHelpers.isValidFilename(newName))
                         {
-                            if (!newFile.exists() && !newName.equals(oldName))
+                            if (!newFile.exists() && !newName.equals(oldName) && newName.length() < 256)
                             {
                                 if (f.renameTo(newFile))
                                 {
