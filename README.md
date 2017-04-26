@@ -6,7 +6,7 @@ Platform: Android
 Language: Java
 
 ### Demo build
-https://github.com/brenmeath/FileManager/releases/tag/v0.1
+[here](https://github.com/brenmeath/FileManager/releases/tag/v0.1)
 
 ### Notable Features
 * Create new files and folders
