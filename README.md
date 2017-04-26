@@ -1,8 +1,8 @@
 # File Manager
-An android app I made for my final programming assignment in 2nd year of Computer Science
-Date of submission: 26/04/2017
+An android app I made for my final programming assignment in 2nd year of Computer Science  
+Date of submission: 26/04/2017  
 
-Platform: Android
+Platform: Android  
 Language: Java
 
 ### Demo build
