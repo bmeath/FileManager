@@ -3,6 +3,7 @@ package com.bmeath.filemanager;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
 import android.os.Handler;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
@@ -19,26 +20,12 @@ import java.util.Observer;
 
 public class IOService extends Service implements Observer
 {
+    private Thread t;
+    private Handler handler;
+
     private int notifyId = 1;
     private NotificationManager progressNotification;
     private NotificationCompat.Builder nBuilder;
-
-    private class ResultToast implements Runnable
-    {
-        String msg;
-
-        public ResultToast(String msg) {
-            this.msg = msg;
-        }
-
-        public void run()
-        {
-            Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    private Handler handler;
-    Thread t;
 
     public IBinder onBind(Intent intent)
     {
@@ -48,14 +35,13 @@ public class IOService extends Service implements Observer
     public int onStartCommand(final Intent intent, int flags, int startId)
     {
         progressNotification = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+        handler = new Handler();
 
         nBuilder = new NotificationCompat.Builder(this);
         nBuilder .setContentTitle("File Manager");
         nBuilder .setSmallIcon(R.mipmap.ic_launcher_round);
         nBuilder.setProgress(0, 0, true);
 
-
-        handler = new Handler();
         final String[] paths = {
                 intent.getStringExtra("SRC_PATH"),
                 intent.getStringExtra("DST_PATH")
@@ -88,10 +74,19 @@ public class IOService extends Service implements Observer
 
     public void update(Observable o, Object arg)
     {
-        nBuilder.setContentText((String) arg);
+        final String msg = (String) arg;
+        nBuilder.setContentText(msg);
         nBuilder.setProgress(100, 100, false);
         progressNotification.notify(notifyId, nBuilder.build());
-        handler.post(new ResultToast((String) arg));
+
+        handler.post(new Runnable()
+        {
+            public void run()
+            {
+                Toast.makeText(getApplicationContext(), msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+
         stopSelf();
     }
 

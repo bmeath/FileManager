@@ -11,6 +11,7 @@ import android.os.Environment;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.ContextMenu;
@@ -30,10 +31,12 @@ import java.util.Collections;
  * Created by bm on 15/04/17.
  */
 
-public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, SwipeRefreshLayout.OnRefreshListener
 {
     private static final int REQUEST_CONSTANT = 1;
-    private static String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+    private static final String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
+
+    SwipeRefreshLayout swipeRefreshLayout;
 
     private ListView lView;
 
@@ -50,6 +53,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private boolean deleteAfterPaste;
     private int selectedMem;
 
+    IOService ioService;
+
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
@@ -61,10 +66,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         getPermission();
 
+        swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh);
+        swipeRefreshLayout.setOnRefreshListener(this);
+
+
         lView = (ListView) findViewById(R.id.lView);
         lView.setOnItemClickListener(this);
         lView.setOnItemLongClickListener(this);
         lView.setOnCreateContextMenuListener(this);
+
 
         // set current directory to external storage and list contents
         cd(Environment.getExternalStorageDirectory().getAbsolutePath());
@@ -108,49 +118,48 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     public boolean onOptionsItemSelected(MenuItem item)
     {
-        int id = item.getItemId();
+        final int id = item.getItemId();
 
-        if (id == R.id.paste)
+        switch (id)
         {
-            String src = clipboard;
-            String dst;
-            clipboard = null;
-
-            try
-            {
-                dst = currentDir.getCanonicalPath() + File.separator + new File(src).getName();
-
-                if (deleteAfterPaste)
+            case R.id.paste:
+                String src = clipboard;
+                String dst;
+                clipboard = null;
+                try
                 {
-                    mv(src, dst);
-                    Toast.makeText(this, "Moving items...", Toast.LENGTH_SHORT).show();
-                }
-                else
-                {
-                    cp(src, dst);
-                    Toast.makeText(this, "Copying items...", Toast.LENGTH_SHORT).show();
-                }
+                    dst = currentDir.getCanonicalPath() + File.separator + new File(src).getName();
 
-                invalidateOptionsMenu();
+                    if (deleteAfterPaste)
+                    {
+                        mv(src, dst);
+                        Toast.makeText(this, "Moving items...", Toast.LENGTH_SHORT).show();
+                    }
+                    else
+                    {
+                        cp(src, dst);
+                        Toast.makeText(this, "Copying items...", Toast.LENGTH_SHORT).show();
+                    }
+
+                    invalidateOptionsMenu();
+                    ls();
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+                break;
+            case R.id.newfile:
+                mkFile();
                 ls();
-            }
-            catch (IOException e)
-            {
-                e.printStackTrace();
-            }
-
-        }
-
-        if (id == R.id.newfile)
-        {
-            mkFile();
-            ls();
-        }
-
-        if (id == R.id.newfolder)
-        {
-            mkdir();
-            ls();
+                break;
+            case R.id.newfolder:
+                mkdir();
+                ls();
+                break;
+            case R.id.refresh:
+                ls();
+                break;
         }
 
         return true;
@@ -165,7 +174,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
         else
         {
-            fileMissingHandler();
+            Toast.makeText(this, "Error: this file/folder no longer exists!", Toast.LENGTH_SHORT).show();
+            ls();
         }
     }
 
@@ -424,11 +434,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         propsFragment.show(getSupportFragmentManager(), "props");
     }
 
-    private void fileMissingHandler()
+    public void onRefresh()
     {
-        Toast.makeText(this, "Error: this file/folder no longer exists!", Toast.LENGTH_SHORT).show();
         ls();
+        swipeRefreshLayout.setRefreshing(false);
     }
-
-
 }
