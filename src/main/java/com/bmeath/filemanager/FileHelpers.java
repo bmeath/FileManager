@@ -28,6 +28,10 @@ public class FileHelpers
 
     public static boolean isValidFilename(String s)
     {
+        if (s.equals(""))
+        {
+            return false;
+        }
         for (int i = 0; i < ILLEGAL_CHARS.length; i ++)
         {
             if (s.contains(ILLEGAL_CHARS[i]))
