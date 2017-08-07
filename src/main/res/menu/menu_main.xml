@@ -21,5 +21,11 @@
         app:showAsAction="never"
         android:id="@+id/newfolder"
         android:icon="@drawable/newfolder_icon"/>
+    <item
+        android:title="Show hidden"
+        app:showAsAction="never"
+        app:actionViewClass="android.widget.CheckBox"
+        android:checkable="true"
+        android:id="@+id/showhidden" />
 
 </menu>

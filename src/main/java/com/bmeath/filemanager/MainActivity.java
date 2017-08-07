@@ -2,12 +2,15 @@ package com.bmeath.filemanager;
 
 import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
@@ -35,6 +38,8 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 {
     private static final String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
+    SharedPreferences sharedPrefs;
+
     SwipeRefreshLayout swipeRefreshLayout;
 
     private ListView lView;
@@ -42,14 +47,16 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     private FileAdapter fileAdapter;
     private File currentDir;
     private String parent;
-    private Boolean showHidden = true;
+    private boolean showHidden;
 
     // used to launch file viewing activities
     private Intent fileViewIntent = new Intent(Intent.ACTION_VIEW).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
     private String clipboard;
     private MenuItem pasteOption;
+    private MenuItem showHiddenOption;
     private boolean deleteAfterPaste;
+
     private int selectedMem;
 
     protected void onCreate(Bundle savedInstanceState)
@@ -73,9 +80,44 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         lView.setOnItemLongClickListener(this);
         lView.setOnCreateContextMenuListener(this);
 
+        sharedPrefs = getPreferences(Context.MODE_PRIVATE);
+        loadPrefs();
+
         // set current directory to external storage and list contents
         cd(Environment.getExternalStorageDirectory().getAbsolutePath());
         ls();
+    }
+
+    @Override
+    public void onResume()
+    {
+        super.onResume();
+        loadPrefs();
+    }
+
+    @Override
+    public void onPause()
+    {
+        super.onPause();
+        savePrefs();
+    }
+
+    /* load settings after resuming */
+    public void loadPrefs()
+    {
+        // set hidden files checkbox state
+        showHidden = sharedPrefs.getBoolean("showHidden", false);
+    }
+
+    /* save settings after pausing*/
+    public void savePrefs()
+    {
+        SharedPreferences.Editor prefEdit = sharedPrefs.edit();
+
+        // save hidden files checkbox state
+        prefEdit.putBoolean("showHidden", showHidden);
+
+        prefEdit.apply();
     }
 
     private void getPermission()
@@ -103,6 +145,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         {
             pasteOption.setVisible(true);
         }
+        showHiddenOption.setChecked(showHidden);
         return true;
     }
 
@@ -110,6 +153,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     {
         getMenuInflater().inflate(R.menu.menu_main, m);
         pasteOption = m.findItem(R.id.paste);
+        showHiddenOption = m.findItem(R.id.showhidden);
         return true;
     }
 
@@ -157,6 +201,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             case R.id.refresh:
                 ls();
                 break;
+            case R.id.showhidden:
+                showHidden ^= true;
+                ls();
         }
 
         return true;
