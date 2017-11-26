@@ -16,10 +16,10 @@ import java.util.LinkedHashMap;
  * For viewing properties of a file/folder
  */
 
-public class PropsDialogFragment extends DialogFragment
-{
-    public Dialog onCreateDialog(Bundle savedInstanceState)
-    {
+public class FilePropsDialogFragment extends DialogFragment implements DialogInterface.OnClickListener {
+
+    @Override
+    public Dialog onCreateDialog(Bundle savedInstanceState) {
         HashMap<String, String> props;
         Bundle args = getArguments();
         View v;
@@ -34,21 +34,19 @@ public class PropsDialogFragment extends DialogFragment
         props = FileHelpers.getProperties(getContext(), args.getString("path"));
 
         msg = "";
-        for (LinkedHashMap.Entry<String, String> entry : props.entrySet())
-        {
-           msg += entry.getKey() + ": " + entry.getValue() + "\n";
+        for (LinkedHashMap.Entry<String, String> entry : props.entrySet()) {
+           msg += entry.getKey() + ": \t" + entry.getValue() + "\n";
         }
 
         builder.setMessage(msg);
         builder.setView(v);
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener()
-        {
-            public void onClick(DialogInterface dialog, int id)
-            {
-                dismiss();
-            }
-        });
+        builder.setPositiveButton("OK", this);
 
         return builder.create();
+    }
+
+    @Override
+    public void onClick(DialogInterface dialogInterface, int i) {
+        dismiss();
     }
 }
