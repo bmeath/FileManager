@@ -20,18 +20,19 @@ import java.io.OutputStream;
 import java.text.DateFormat;
 import java.util.LinkedHashMap;
 
-public class FileHelpers
-{
+public class FileHelpers {
     private static final String[] ILLEGAL_CHARS = {"\\", "/", ":", "*", "?", "'", "<", ">", "|"};
+    private static final int FILENAME_LEN_MAX = 127;
     private static final String RENAME_APPEND = "-copy"; // to prevent overwriting existing files
     private static final MimeTypeMap mime = MimeTypeMap.getSingleton();
 
     public static boolean isValidFilename(String s)
     {
-        if (s.equals(""))
-        {
+        int len = s.length();
+        if (len > FILENAME_LEN_MAX || len == 0) {
             return false;
         }
+
         for (int i = 0; i < ILLEGAL_CHARS.length; i ++)
         {
             if (s.contains(ILLEGAL_CHARS[i]))
@@ -39,125 +40,125 @@ public class FileHelpers
                 return false;
             }
         }
-        if (s.charAt(s.length()-1) == '.')
+        if (s.charAt(len - 1) == '.')
         {
             return false;
         }
         return true;
     }
 
-    public static boolean copy(String srcPath, String dstPath)
+    /* Copy files, and recursively copy folders.
+     * paths: an array of the files/folders to copy, with the last element being the destination path.
+     * returns true after all files were successfully copied, otherwise false
+     */
+    public static boolean copy(String[] paths)
     {
         InputStream in;
         OutputStream out;
-        try
-        {
-            File src = new File(srcPath);
-            File dst = new File(dstPath);
+        File src, dst;
+        String srcPath, dstPath;
 
-            if (src.isDirectory())
-            {
-                if (!dst.exists())
-                {
-                    dst.mkdirs();
-                }
+        try {
+            dstPath = paths[paths.length - 1];
+            dst = new File(dstPath);
 
-                String[] files = src.list();
+            for (int i = 0; i < paths.length - 1; i++) {
+                srcPath = paths[i];
+                src = new File(srcPath);
 
-                for (int i = 0; i < files.length; i++)
-                {
-                    String newSrc = new File(src, files[i]).getCanonicalPath();
-                    String newDst = new File(dst, files[i]).getCanonicalPath();
+                if (src.isDirectory()) {
+                    if (!dst.exists()) {
+                        dst.mkdirs();
+                    }
+
+                    String[] files = src.list();
                     // recursively copy all sub-items
-                    copy(newSrc, newDst);
+                    for (int j = 0; j < files.length; j++) {
+                        copy(new File(src, files[j]).getCanonicalPath(), new File(dst, files[j]).getCanonicalPath());
+                    }
+                } else {
+                    in = new FileInputStream(srcPath);
+
+                    if (new File(dstPath).isDirectory()) {
+                        dstPath += File.separator + src.getName();
+                    }
+
+                    if (new File(dstPath).exists()) {
+                        dstPath = renameCopy(dstPath);
+                    }
+
+                    out = new FileOutputStream(dstPath);
+
+                    byte[] buffer = new byte[1024];
+                    int read;
+                    while ((read = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, read);
+                    }
+
+                    in.close();
+                    out.flush();
+                    out.close();
                 }
-            }
-            else
-            {
-                in = new FileInputStream(srcPath);
-
-                if (new File(dstPath).isDirectory())
-                {
-                    dstPath += File.separator + src.getName();
-                }
-
-                if (new File(dstPath).exists())
-                {
-                    dstPath = renameCopy(dstPath);
-                }
-
-                out = new FileOutputStream(dstPath);
-
-                byte[] buffer = new byte[1024];
-                int read;
-                while ((read = in.read(buffer)) != -1)
-                {
-                    out.write(buffer, 0, read);
-                }
-
-                in.close();
-                out.flush();
-                out.close();
             }
             return true;
-        }
-        catch (FileNotFoundException fnfe)
-        {
+        } catch (FileNotFoundException fnfe) {
             fnfe.printStackTrace();
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return false;
     }
 
-    public static boolean delete(String path)
+    public static boolean copy(String srcPath, String dstPath) {
+        return copy(new String[]{srcPath, dstPath});
+    }
+
+
+    /* Delete files/folders.
+     * paths: an array of the files/folders to delete
+     * returns true after all files/folders were successfully deleted, otherwise false
+     */
+    public static boolean delete(String[] paths)
     {
-        File f = new File(path);
-        if (f.isDirectory())
-        {
-            String[] files = f.list();
-            for (int i = 0; i < files.length; i++)
-            {
-                try
-                {
-                    delete(new File(f, files[i]).getCanonicalPath());
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                    return false;
+        for (String path: paths) {
+            File f = new File(path);
+            if (f.isDirectory()) {
+                String[] files = f.list();
+                for (int i = 0; i < files.length; i++) {
+                    try {
+                        delete(new File(f, files[i]).getCanonicalPath());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return false;
+                    }
                 }
             }
+            // all sub-items have been deleted, now delete the empty folder
+            f.delete();
         }
-        // all sub-items have been deleted, now delete the empty folder
-        f.delete();
         return true;
+    }
+
+    public static boolean delete(String path) {
+        return delete(new String[] {path});
     }
 
     /*
      * Returns a unique file path to avoid overwriting a file of the same name
      */
-    public static String renameCopy(String path)
-    {
+    public static String renameCopy(String path) {
         String uniquePath = path;
 
-        while (new File(uniquePath).exists())
-        {
+        while (new File(uniquePath).exists()) {
             int extIndex = (uniquePath.lastIndexOf('.'));
 
-            if (extIndex == -1)
-            {
+            if (extIndex == -1) {
                 uniquePath += RENAME_APPEND;
-            }
-            else
-            {
+            } else {
                 uniquePath = uniquePath.substring(0, extIndex) + RENAME_APPEND + uniquePath.substring(extIndex);
             }
 
-            if (uniquePath.length() > 255)
-            {
+            if (uniquePath.length() > 255) {
                 return null;
             }
         }
@@ -167,8 +168,7 @@ public class FileHelpers
     /*
      * returns a hashmap of properties of a file/folder
      */
-    public static LinkedHashMap<String, String> getProperties(Context context, String path)
-    {
+    public static LinkedHashMap<String, String> getProperties(Context context, String path) {
         DateFormat dateFormat = android.text.format.DateFormat.getDateFormat(context);
         File f = new File(path);
         LinkedHashMap<String, String> props = new LinkedHashMap<>();
@@ -176,21 +176,15 @@ public class FileHelpers
 
         props.put("Name", name);
 
-        if (f.isDirectory())
-        {
+        if (f.isDirectory()) {
             props.put("Type", "folder");
-        }
-        else
-        {
+        } else {
             props.put("Type", getMimeType(name));
         }
 
-        try
-        {
+        try {
             props.put("Location", f.getCanonicalPath());
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -201,18 +195,14 @@ public class FileHelpers
         return props;
     }
 
-    public static String getMimeType(String name)
-    {
+    public static String getMimeType(String name) {
         // get mimetype using extension extracted from filename
         String s = name;
         int i = s.lastIndexOf(".") + 1;
-        if (i < s.length())
-        {
+        if (i < s.length()) {
             String mimeType = mime.getMimeTypeFromExtension(s.substring(i).toLowerCase());
             return mimeType;
-        }
-        else
-        {
+        } else {
             return null;
         }
     }
