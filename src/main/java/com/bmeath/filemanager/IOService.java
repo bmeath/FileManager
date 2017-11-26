@@ -2,6 +2,7 @@ package com.bmeath.filemanager;
 
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
@@ -24,50 +25,52 @@ public class IOService extends Service implements Observer
     // Handler for generating Toasts
     private Handler handler;
 
+    private Context appContext;
+
     private int notifyId = 1;
     private NotificationManager progressNotification;
     private NotificationCompat.Builder nBuilder;
 
+    @Override
     public int onStartCommand(final Intent intent, int flags, int startId)
     {
-        final String[] paths = {
-                intent.getStringExtra("SRC_PATH"),
-                intent.getStringExtra("DST_PATH")
-        };
+        appContext = getApplicationContext();
+        final String[] paths = intent.getStringArrayExtra("PATHS");
+        FileOp op = (FileOp) intent.getSerializableExtra("OPERATION");
 
-        progressNotification = (NotificationManager) getSystemService(getApplicationContext().NOTIFICATION_SERVICE);
+
+        progressNotification = (NotificationManager) getSystemService(appContext.NOTIFICATION_SERVICE);
         handler = new Handler();
 
-        nBuilder = new NotificationCompat.Builder(this);
+        nBuilder = new NotificationCompat.Builder(this, appContext.getString(R.string.IONotifChannel));
         nBuilder.setContentTitle(getResources().getString(R.string.app_name));
-        nBuilder.setSmallIcon(R.drawable.ic_stat_name);
+        nBuilder.setSmallIcon(R.drawable.io_notify_icon);
         nBuilder.setProgress(0, 0, true);
 
-        String mode = intent.getStringExtra("MODE");
-        switch (mode)
+
+        switch (op)
         {
-            case "COPY":
+            case COPY:
                 nBuilder.setContentText("Copy in progress");
-                t = new Thread(new CopyThread(paths[0], paths[1], false, this));
                 break;
-            case "CUT":
+            case CUT:
                 nBuilder.setContentText("Cut in progress");
-                t = new Thread(new CopyThread(paths[0], paths[1], true, this));
                 break;
-            case "DELETE":
+            case DELETE:
                 nBuilder.setContentText("Delete in progress");
-                t =  new Thread(new DeleteThread(paths[0], this));
                 break;
             default:
                 // no mode specified
                 stopSelf();
                 return START_NOT_STICKY;
         }
+        t =  new Thread(new IOThread(paths, op, this));
         progressNotification.notify(notifyId, nBuilder.build());
         t.start();
         return START_NOT_STICKY;
     }
 
+    @Override
     public void update(Observable o, Object arg)
     {
         final String msg = (String) arg;
@@ -85,6 +88,7 @@ public class IOService extends Service implements Observer
         stopSelf();
     }
 
+    @Override
     public IBinder onBind(Intent intent)
     {
         return null;
