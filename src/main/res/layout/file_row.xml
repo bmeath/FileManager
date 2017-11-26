@@ -10,17 +10,28 @@
         android:layout_height="32dp"
         android:textSize="16sp"
         android:id="@+id/fileText"
-        android:layout_toRightOf="@+id/fileIcon"/>
+        android:layout_toRightOf="@+id/fileIcon"
+        android:layout_toEndOf="@+id/fileIcon" />
+
     <ImageView
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:id="@+id/fileIcon"
+        android:layout_gravity="center" />
+    <!--<ImageView
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:id="@+id/fileIcon"
         android:layout_gravity="center"/>
+    <Button android:id="@+id/fileSelect"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />-->
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="16dp"
         android:id="@+id/fileSize"
         android:layout_below="@+id/fileText"
         android:layout_toRightOf="@+id/fileIcon"
-        android:layout_marginBottom="5dp"/>
+        android:layout_marginBottom="5dp"
+        android:layout_toEndOf="@+id/fileIcon" />
 </RelativeLayout>

@@ -9,7 +9,8 @@
     <EditText
         android:id="@+id/renameEditText"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" >
+        android:layout_height="wrap_content"
+        android:inputType="textNoSuggestions">
         <requestFocus />
     </EditText>
 
