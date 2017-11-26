@@ -1,16 +1,16 @@
 package com.bmeath.filemanager;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.content.ContextCompat;
@@ -34,43 +34,67 @@ import java.util.Collections;
  * Created by bm on 15/04/17.
  */
 
-public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, SwipeRefreshLayout.OnRefreshListener
-{
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener, AdapterView.OnItemLongClickListener, SwipeRefreshLayout.OnRefreshListener {
+
+    /* keeps track of what files are marked for cut/copy/delete */
+    private class Clipboard {
+        ArrayList<String> paths = new ArrayList<String>();
+        FileOp operation;
+
+        void add(String path) {
+            paths.add(path);
+        }
+
+        String get(int index) {
+            return paths.get(index);
+        }
+
+        void clear() {
+            paths.clear();
+        }
+
+        boolean isEmpty() {
+            return paths.isEmpty();
+        }
+    }
+
     private static final String[] permissions = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
 
-    SharedPreferences sharedPrefs;
+    private Settings settings = Settings.getInstance();
 
-    SwipeRefreshLayout swipeRefreshLayout;
-
+    private SwipeRefreshLayout swipeRefreshLayout;
     private ListView lView;
-
     private FileAdapter fileAdapter;
+
     private File currentDir;
     private String parent;
-    private boolean showHidden;
 
     // used to launch file viewing activities
     private Intent fileViewIntent = new Intent(Intent.ACTION_VIEW).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-    private String clipboard;
+    private Clipboard clipboard = new Clipboard(); // keep track of file(s) selected for cut/copy/delete
+
+    // options menu
     private MenuItem pasteOption;
     private MenuItem showHiddenOption;
-    private boolean deleteAfterPaste;
 
-    private int selectedMem;
-
-    protected void onCreate(Bundle savedInstanceState)
-    {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        settings.init(getPreferences(Context.MODE_PRIVATE));
+        settings.load();
 
         setContentView(R.layout.activity_main);
 
         Toolbar tBar = (Toolbar) findViewById(R.id.tBar);
         setSupportActionBar(tBar);
-        tBar.setTitleTextColor(0xFFFFFFFF);
 
         // check if storage access permissions need to be requested
         getPermission();
+
+        // notifications must be posted to a channel for Android O onwards
+        createNotificationChannels();
 
         swipeRefreshLayout = (SwipeRefreshLayout) findViewById(R.id.refresh);
         swipeRefreshLayout.setOnRefreshListener(this);
@@ -80,305 +104,232 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         lView.setOnItemLongClickListener(this);
         lView.setOnCreateContextMenuListener(this);
 
-        sharedPrefs = getPreferences(Context.MODE_PRIVATE);
-        loadPrefs();
-
         // set current directory to external storage and list contents
-        cd(Environment.getExternalStorageDirectory().getAbsolutePath());
-        ls();
+        changeDir(Environment.getExternalStorageDirectory().getAbsolutePath());
+        refresh();
     }
 
     @Override
-    public void onResume()
-    {
+    public void onResume() {
         super.onResume();
-        loadPrefs();
+        settings.load();
     }
 
     @Override
-    public void onPause()
-    {
+    public void onPause() {
         super.onPause();
-        savePrefs();
+        settings.save();
     }
 
-    /* load settings after resuming */
-    public void loadPrefs()
-    {
-        // set hidden files checkbox state
-        showHidden = sharedPrefs.getBoolean("showHidden", false);
-    }
-
-    /* save settings after pausing*/
-    public void savePrefs()
-    {
-        SharedPreferences.Editor prefEdit = sharedPrefs.edit();
-
-        // save hidden files checkbox state
-        prefEdit.putBoolean("showHidden", showHidden);
-
-        prefEdit.apply();
-    }
-
-    private void getPermission()
-    {
+    // request permissions that are needed
+    private void getPermission() {
         // check if run-time permission requesting should be done
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1)
-        {
-            for (int i = 0; i < permissions.length; i++)
-            {
-                int havePermission = ContextCompat.checkSelfPermission(this, permissions[i]);
-                if (havePermission == PackageManager.PERMISSION_DENIED)
-                {
-                    ActivityCompat.requestPermissions(this, new String[]{permissions[i]}, 1);
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1) {
+            for (String permission : permissions) {
+                int havePermission = ContextCompat.checkSelfPermission(this, permission);
+                if (havePermission == PackageManager.PERMISSION_DENIED) {
+                    ActivityCompat.requestPermissions(this, new String[]{permission}, 1);
                 }
             }
         }
     }
 
-    public boolean onPrepareOptionsMenu(Menu m)
-    {
-        if (clipboard == null) {
+    // create notification channels to post notifications on
+    public void createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager notifManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            NotificationChannel notifChannel = new NotificationChannel(getString(R.string.IONotifChannel), "IO Notifications", NotificationManager.IMPORTANCE_DEFAULT);
+            notifChannel.setDescription("Receive notifications when moving files.");
+            if (notifManager != null) {
+                notifManager.createNotificationChannel(notifChannel);
+            }
+        }
+    }
+
+    @Override
+    public boolean onPrepareOptionsMenu(Menu m) {
+        if (clipboard.isEmpty()) {
             pasteOption.setVisible(false);
         }
         else
         {
             pasteOption.setVisible(true);
         }
-        showHiddenOption.setChecked(showHidden);
+        showHiddenOption.setChecked(settings.showHidden);
         return true;
     }
 
-    public boolean onCreateOptionsMenu(Menu m)
-    {
+    @Override
+    public boolean onCreateOptionsMenu(Menu m) {
         getMenuInflater().inflate(R.menu.menu_main, m);
         pasteOption = m.findItem(R.id.paste);
         showHiddenOption = m.findItem(R.id.showhidden);
         return true;
     }
 
-    public boolean onOptionsItemSelected(MenuItem item)
-    {
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
         final int id = item.getItemId();
 
-        switch (id)
-        {
+        switch (id) {
             case R.id.paste:
-                String src = clipboard;
-                String dst;
-                clipboard = null;
-                try
-                {
-                    dst = currentDir.getCanonicalPath() + File.separator + new File(src).getName();
-
-                    if (deleteAfterPaste)
-                    {
-                        mv(src, dst);
-                        Toast.makeText(this, "Moving items...", Toast.LENGTH_SHORT).show();
-                    }
-                    else
-                    {
-                        cp(src, dst);
-                        Toast.makeText(this, "Copying items...", Toast.LENGTH_SHORT).show();
-                    }
-
-                    invalidateOptionsMenu();
-                    ls();
-                }
-                catch (IOException e)
-                {
+                try {
+                    String src = clipboard.get(0);
+                    startIOService(src, currentDir.getCanonicalPath() + File.separator + new File(src).getName(), clipboard.operation);
+                } catch (IOException e) {
                     e.printStackTrace();
                 }
+                clipboard.clear();
+                invalidateOptionsMenu();
+                refresh();
                 break;
             case R.id.newfile:
-                mkFile();
-                ls();
+                createFile(FileType.REG);
+                refresh();
                 break;
             case R.id.newfolder:
-                mkdir();
-                ls();
+                createFile(FileType.DIR);
+                refresh();
                 break;
             case R.id.refresh:
-                ls();
+                refresh();
                 break;
             case R.id.showhidden:
-                showHidden ^= true;
-                ls();
+                settings.showHidden ^= true;
+                refresh();
         }
 
         return true;
     }
 
-    public void onItemClick(AdapterView<?> adapterView, View v, int position, long id)
-    {
+    @Override
+    public void onItemClick(AdapterView<?> adapterView, View v, int position, long id) {
         File f = (File) fileAdapter.getItem(position);
-        if (f.exists())
-        {
-            open(f);
-        }
-        else
-        {
+        if (f.exists()) {
+            openFile(f);
+        } else {
             Toast.makeText(this, "Error: this file/folder no longer exists!", Toast.LENGTH_SHORT).show();
-            ls();
+            refresh();
         }
     }
 
-    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id)
-    {
-        selectedMem = position;
+    @Override
+    public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+        lView.setTag(position); // allows position of file in list to be known in onContextItemSelected
         registerForContextMenu(lView);
         openContextMenu(lView);
         return true;
     }
 
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo)
-    {
-        if (v.getId() == R.id.lView)
-        {
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        if (v.getId() == R.id.lView) {
             String[] options = getResources().getStringArray(R.array.long_click_menu);
-            for (int i = 0; i < options.length; i++)
-            {
+            for (int i = 0; i < options.length; i++) {
                 menu.add(Menu.NONE, i, i, options[i]);
             }
         }
     }
 
-    public boolean onContextItemSelected(MenuItem option)
-    {
-        String[] options = getResources().getStringArray(R.array.long_click_menu);
+    @Override
+    public boolean onContextItemSelected(MenuItem option) {
         String path;
 
-        File f = (File) fileAdapter.getItem(selectedMem);
-        try
-        {
+        File f = (File) fileAdapter.getItem((int) lView.getTag());
+        try {
             path = f.getCanonicalPath();
-
-            switch (option.getItemId())
-            {
+            switch (option.getItemId()) {
                 case 0: // open
-                    open(f);
+                    openFile(f);
                     break;
                 case 1: // cut
-                    clipboard = path;
-                    deleteAfterPaste = true;
+                    clipboard.clear();
+                    clipboard.add(path);
+                    clipboard.operation = FileOp.CUT;
                     invalidateOptionsMenu();
                     break;
                 case 2: // copy
-                    clipboard = path;
-                    deleteAfterPaste = false;
+                    clipboard.clear();
+                    clipboard.add(path);
+                    clipboard.operation = FileOp.COPY;
                     invalidateOptionsMenu();
                     break;
                 case 3: // delete
-                    rm(path);
+                    startIOService(path, FileOp.DELETE);
                     Toast.makeText(this, "Deleting...", Toast.LENGTH_SHORT).show();
-                    ls();
+                    refresh();
                     break;
                 case 4: // rename
-                    rename(path);
-                    ls();
+                    renameFile(path);
+                    refresh();
                     break;
                 case 5: // properties
-                    startPropsDialog(path);
+                    showProperties(path);
                     break;
                 default:
             }
-        }
-        catch (IOException e)
-        {
-            Toast.makeText(this, "Failed to select file/folder", Toast.LENGTH_SHORT).show();
+        } catch (IOException e) {
+            Toast.makeText(this, "Failed to open file/folder", Toast.LENGTH_SHORT).show();
             e.printStackTrace();
         }
         return true;
     }
 
-    private void open(File f)
-    {
-        if (f.isDirectory())
-        {
-            if (f.getName().equals(".."))
-            {
-                cd(parent);
-                ls();
+    private void openFile(File f) {
+        if (f.isDirectory()) {
+            if (f.getName().equals("..")) {
+                changeDir(parent);
+                refresh();
+            } else {
+                changeDir(f.getAbsolutePath());
+                refresh();
             }
-            else
-            {
-                cd(f.getAbsolutePath());
-                ls();
-            }
-        }
-        else
-        {
-            openFile(f.getAbsolutePath());
-        }
-    }
+        } else {
+            String mimeType = FileHelpers.getMimeType(f.getAbsolutePath());
 
-    private void openFile(String path)
-    {
-        // get mimetype from extension extracted from filename
-        String mimeType = FileHelpers.getMimeType(path);
+            if (mimeType != null) {
+                fileViewIntent.setDataAndType(Uri.fromFile(f), mimeType);
 
-        if (mimeType != null)
-        {
-            File f = new File(path);
-            fileViewIntent.setDataAndType(Uri.fromFile(f), mimeType);
-
-            try
-            {
-                startActivity(fileViewIntent);
+                try {
+                    startActivity(fileViewIntent);
+                } catch (ActivityNotFoundException e) {
+                    Toast.makeText(this, "No applications were found for this type of file.", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Can't open a file of unknown type", Toast.LENGTH_SHORT).show();
             }
-            catch (ActivityNotFoundException e)
-            {
-                Toast.makeText(this, "No applications were found for this type of file.", Toast.LENGTH_SHORT).show();
-            }
-        }
-        else
-        {
-            Toast.makeText(this, "Can't open a file of unknown type", Toast.LENGTH_SHORT).show();
         }
     }
 
     // set current directory
-    private void cd(String newPath)
-    {
-        if (newPath.equals("../"))
-        {
+    private void changeDir(String newPath) {
+        if (newPath.equals("../")) {
             currentDir = currentDir.getParentFile();
-        }
-        else
-        {
+        } else {
             currentDir = new File(newPath);
         }
         parent = currentDir.getParent();
         setTitle(newPath);
     }
 
-    private void ls()
-    {
+    private void refresh() {
         // get names of current directory contents
-        ArrayList contents = new ArrayList();
-        ArrayList contentsFiles = new ArrayList();
+        ArrayList<File> contents = new ArrayList<>();
+        ArrayList<File> contentsFiles = new ArrayList<>();
 
-
-        if (currentDir.canRead())
-        {
+        if (currentDir.canRead()) {
             File[] currentDirList = currentDir.listFiles();
 
             // convert string array to arraylist
-            if (currentDirList != null)
-            {
+            if (currentDirList != null) {
                 // exclude hidden items
-                for (int i = 0; i < currentDirList.length; i++)
-                {
-                    if ((currentDirList[i].isHidden() && showHidden) || !currentDirList[i].isHidden())
-                    {
+                for (File aCurrentDirList : currentDirList) {
+                    if (!aCurrentDirList.isHidden() || settings.showHidden) {
                         // keep files separate from folders until later for sorting purposes
-                        if (currentDirList[i].isDirectory())
-                        {
-                            contents.add(currentDirList[i]);
-                        }
-                        else
-                        {
-                            contentsFiles.add(currentDirList[i]);
+                        if (aCurrentDirList.isDirectory()) {
+                            contents.add(aCurrentDirList);
+                        } else {
+                            contentsFiles.add(aCurrentDirList);
                         }
                     }
                 }
@@ -390,13 +341,10 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             // now append files to folders, so that folders are at top of list
             contents.addAll(contentsFiles);
 
-            if (parent != null)
-            {
+            if (parent != null) {
                 contents.add(0, new File("../"));
             }
-        }
-        else
-        {
+        } else {
             contents.add(0, new File("../"));
         }
 
@@ -406,83 +354,62 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         registerForContextMenu(lView);
     }
 
-    private boolean mkdir() {
-        return startNewFileDialog("folder");
-    }
-
-    private boolean mkFile() {
-        return startNewFileDialog("file");
-    }
-
-    private void rm(String path)
-    {
-        startIOService(path, null, "DELETE");
-    }
-
-    private void mv(String srcPath, String dstPath)
-    {
-        startIOService(srcPath, dstPath, "CUT");
-    }
-
-    private void cp(String srcPath, String dstPath)
-    {
-        startIOService(srcPath, dstPath, "COPY");
-    }
-
     // start a service to do IO tasks in a separate thread
-    private void startIOService(String srcPath, String dstPath, String mode)
-    {
+    private void startIOService(String[] paths, FileOp op) {
         Intent i = new Intent(this, IOService.class);
-        i.putExtra("SRC_PATH", srcPath);
-        i.putExtra("DST_PATH", dstPath);
-        i.putExtra("MODE", mode);
+        i.putExtra("PATHS", paths);
+        i.putExtra("OPERATION", op);
+
         startService(i);
     }
 
-    private boolean startNewFileDialog(String mode)
-    {
-        Bundle args = new Bundle();
-        try
-        {
-            args.putString("path", currentDir.getCanonicalPath());
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-            return false;
-        }
-
-        args.putString("mode", mode);
-        DialogFragment mkFileFragment = new NewFileDialogFragment();
-        mkFileFragment.setArguments(args);
-        mkFileFragment.show(getSupportFragmentManager(), mode);
-        return true;
+    // intended for cut/copy of a single file, but also possible to call this for deletion of two files
+    private void startIOService(String src, String dst, FileOp op) {
+        startIOService(new String[] {src, dst}, op);
     }
 
-    public boolean rename(String path)
+    // only intended for use when deleting a file (since cut/copy require at least two paths)
+    private void startIOService(String s, FileOp op) {
+        startIOService(new String[] {s}, op);
+    }
+
+    private void createFile(FileType ftype)
     {
         Bundle args = new Bundle();
+        try {
+            args.putString("path", currentDir.getCanonicalPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        args.putSerializable("mode", ftype);
+        DialogFragment mkFileFragment = new FileCreateDialogFragment();
+        mkFileFragment.setArguments(args);
+        mkFileFragment.show(getSupportFragmentManager(), "newitem");
+    }
+
+    public void renameFile(String path) {
+        Bundle args = new Bundle();
         args.putString("path", path);
-        DialogFragment renameFragment = new RenameDialogFragment();
+        DialogFragment renameFragment = new FileRenameDialogFragment();
         renameFragment.setArguments(args);
         renameFragment.show(getSupportFragmentManager(), "rename");
-        return true;
     }
 
     // show file/folder properties
-    private void startPropsDialog(String path)
-    {
+    private void showProperties(String path) {
         Bundle args = new Bundle();
         args.putString("path", path);
-        DialogFragment propsFragment = new PropsDialogFragment();
+        DialogFragment propsFragment = new FilePropsDialogFragment();
         propsFragment.setArguments(args);
         propsFragment.show(getSupportFragmentManager(), "props");
     }
 
     // called after swiping to refresh
-    public void onRefresh()
-    {
-        ls();
+    @Override
+    public void onRefresh() {
+        refresh();
         swipeRefreshLayout.setRefreshing(false);
     }
 }
