@@ -8,5 +8,5 @@
         <item>Rename</item>
         <item>Properties</item>
     </string-array>
-
+    <string name="IONotifChannel">IONotifications</string>
 </resources>
